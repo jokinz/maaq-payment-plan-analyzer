@@ -4,12 +4,16 @@ import './App.css'
 import * as XLSX from 'xlsx'
 
 function App() {
+  const [country, setCountry] = useState('colombia')
+  const [currency, setCurrency] = useState('peso')
+
   const sheetName: string = 'WEBPCF'
-  const cellOperationNumber: string = 'C4'
-  const cellTotalCredit: string = 'H8'
+  const cellOperationNumber: string = country === 'colombia' ? 'C4' : 'C1'
+  const cellTotalCredit: string = country === 'colombia' ? 'H8' : 'H5'
   const paymentNumberColumn = 'B'
 
-  const targetDatabase = 'BT_SFCO'
+  // TODO: check if SFL is correct
+  const targetDatabase = country === 'colombia' ? 'BT_SFCO' : 'SFL'
 
   const [file, setFile] = useState<FileList | null>()
 
@@ -23,7 +27,67 @@ function App() {
   const [fileTotalCredit, setFileTotalCredit] = useState<number>(0)
   const [filePaymentsQuantity, setFilePaymentsQuantity] = useState<number>(0)
 
-  const [updateQuery, setUpdateQuery] = useState<string>('')
+  const query1 = `use ${targetDatabase}
+  GO
+  
+  SELECT SUM(FLD_COL_AMOR), NUM_CUOTAS = COUNT(1) FROM
+  SCA_HIPOTEC..COL 
+  WHERE FLD_COL_OPER = ${externalOperationNumber} 
+
+  SELECT * FROM SCA_ADMINI..TCO WHERE FLD_TCO_OPER =
+  ${externalOperationNumber}`
+  const [query2, setQuery2] = useState('')
+  const query3 = `use sca_hipotec
+  GO
+
+  DECLARE @FLD_COL_OPER	INT
+  ,		@FLD_FIN_FPDE	DATETIME
+  ,		@num_liq		int
+
+        SET @FLD_COL_OPER = ${externalOperationNumber}
+
+
+        SELECT @FLD_FIN_FPDE = FLD_FIN_FPDE FROM SCA_HIPOTEC..FIN WHERE FLD_FIN_OPER = @FLD_COL_OPER 
+        
+        EXEC SCA_HIPOTEC..SVC_PRO_CONT2 @FLD_COL_OPER, 0, 0, '1', @FLD_FIN_FPDE, '', '', @num_liq Output
+
+  UPDATE	SCA_HIPOTEC..SOL
+    SET	FLD_SOL_ESOL	= '3',
+      FLD_SOL_RES		= '3'
+  WHERE	FLD_SOL_OPER	= @FLD_COL_OPER
+
+  UPDATE SCA_HIPOTEC..FIN
+    SET FLD_FIN_EST = '3'
+  WHERE FLD_FIN_OPER = @FLD_COL_OPER
+
+  UPDATE SCA_HIPOTEC..TRC 
+  SET FLD_TRC_FPRO = '19900101'
+  WHERE FLD_TRC_OPER = @FLD_COL_OPER AND
+      FLD_TRC_NLIQ != @NUM_LIQ AND
+      FLD_TRC_FPRO = 0 AND
+      FLD_TRC_ASN IN ('SCA1','SCA26' /*OTORGAMIENTOS*/,'SCA5'/*REVERSA OTORGAMIENTO*/,'SCA33'/*OTORGAMIENTO DE RECUPERO*/)
+
+
+
+  /*RESPALDA DATOS DE TABLA FIN Y COL EN BASE DE DATOS HISTORICO*/
+  INSERT INTO SCA_HISTORICO..THIS_FIN
+  (THIS_FIN_OPER, THIS_FIN_MOS, THIS_FIN_FOTO, THIS_FIN_FPDE, THIS_FIN_PLA, THIS_FIN_GNOT, THIS_FIN_MOT, THIS_FIN_INST, THIS_FIN_ICAP, THIS_FIN_MIMP, THIS_FIN_NLIQ)
+  SELECT FLD_FIN_OPER, FLD_FIN_MOS, FLD_FIN_FOTO, FLD_FIN_FPDE, FLD_FIN_PLA, FLD_FIN_GNOT, FLD_FIN_MOT, FLD_FIN_INST, FLD_FIN_ICAP, FLD_FIN_MIMP, @num_liq
+  FROM SCA_HIPOTEC..FIN
+  WHERE FLD_FIN_OPER=@FLD_COL_OPER
+
+  INSERT INTO SCA_HISTORICO..THIS_COL
+  (THIS_COL_OPER, THIS_COL_FVEN, THIS_COL_AMOR, THIS_COL_NCU, THIS_COL_INT, THIS_COL_CUO, THIS_COL_ECLP, THIS_COL_NDOC, THIS_COL_SEGU, THIS_COL_NLIQ)
+  SELECT FLD_COL_OPER, FLD_COL_FVEN, FLD_COL_AMOR, FLD_COL_NCU, FLD_COL_INT, FLD_COL_CUO , FLD_COL_ECLP, FLD_COL_NDOC, FLD_COL_SEGU, @num_liq
+  FROM SCA_HIPOTEC..COL
+  WHERE FLD_COL_OPER=@FLD_COL_OPER
+
+
+
+  --- PARA LOS CASOS DE CUOTAS QUE ENTRAN VENCIDAS
+  UPDATE SCA_ADMINI..TCO
+  SET FLD_TCO_FPDI = (SELECT MIN(FLD_COL_FVEN) FROM SCA_HIPOTEC..COL WHERE FLD_COL_OPER = @FLD_COL_OPER )
+  WHERE FLD_TCO_OPER = @FLD_COL_OPER`
 
   function readCellValue(
     file: File,
@@ -191,7 +255,7 @@ function App() {
                   siguienteFechVenc - fechVenc < 28 ||
                   siguienteFechVenc - fechVenc > 31
                 ) {
-                  console.error(`Error de validación en cuota N°: ${numCuota}` )
+                  alert(`Error de validación en cuota N°: ${numCuota}`)
                 }
                 // console.log([
                 //   seguros + intereses + amortizacion - cuota,
@@ -225,7 +289,7 @@ function App() {
     file: File,
     sheetName: string,
     columnName: string
-  ): Promise<any> {
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
 
@@ -241,7 +305,6 @@ function App() {
             const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
             const colIndex = XLSX.utils.decode_col(columnName)
 
-            let lastCellValue
             let concatenatedQueries = `use ${targetDatabase}
             GO \n`
 
@@ -317,10 +380,9 @@ function App() {
                 const query = createUpdateQueryLine(rowData)
                 concatenatedQueries += query + '\n'
               }
-              setUpdateQuery(concatenatedQueries)
             }
 
-            resolve(lastCellValue)
+            resolve(concatenatedQueries)
           } else {
             reject(new Error('Invalid file content type'))
           }
@@ -381,202 +443,256 @@ function App() {
 
   return (
     <>
-      <form action="">
-        <p>
-          External Operation Number:{' '}
+      <p>Country: </p>
+      <div>
+        <div>
           <input
-            type="text"
-            value={externalOperationNumber}
-            onChange={(event) =>
-              parseInt(event.target.value) &&
-              setExternalOperationNumber(parseInt(event.target.value))
-            }
+            type="radio"
+            id="colombia"
+            value="colombia"
+            checked={country === 'colombia'}
+            onChange={() => setCountry('colombia')}
           />
-        </p>
-        <p
-          style={{
-            textAlign: 'left',
-            whiteSpace: 'pre-line',
-            border: '1px solid white',
-          }}
-        >
-          {externalOperationNumber &&
-            `use ${targetDatabase}
-              GO
-              
-              SELECT SUM(FLD_COL_AMOR), NUM_CUOTAS = COUNT(1) FROM
-              SCA_HIPOTEC..COL 
-              WHERE FLD_COL_OPER = ${externalOperationNumber} 
+          <label htmlFor="colombia">Colombia</label>
+        </div>
 
-              SELECT * FROM SCA_ADMINI..TCO WHERE FLD_TCO_OPER =
-              ${externalOperationNumber}`}
-        </p>
-        <p>
-          External Total Credit:{' '}
+        <div>
           <input
-            type="text"
-            value={externalTotalCredit}
-            onChange={(event) =>
-              parseInt(event.target.value) &&
-              setExternalTotalCredit(parseInt(event.target.value))
-            }
+            type="radio"
+            id="chile"
+            value="chile"
+            checked={country === 'chile'}
+            onChange={() => setCountry('chile')}
           />
-        </p>
-        <p>
-          External Payments Quantity:{' '}
-          <input
-            type="text"
-            value={externalPaymentsQuantity}
-            onChange={(event) =>
-              parseInt(event.target.value) &&
-              setExternalPaymentsQuantity(parseInt(event.target.value))
-            }
-          />
-        </p>
+          <label htmlFor="chile">Chile</label>
+        </div>
+      </div>
+      <p>
+        External Operation Number:{' '}
         <input
-          type="file"
-          onChange={(event) => setFile(event.currentTarget.files)}
+          type="text"
+          value={externalOperationNumber}
+          onChange={(event) =>
+            parseInt(event.target.value) &&
+            setExternalOperationNumber(parseInt(event.target.value))
+          }
         />
+      </p>
+      <textarea
+        disabled
+        value={externalOperationNumber && query1}
+        style={{
+          width: '100%',
+          minHeight: '10rem',
+          resize: 'none',
+          textAlign: 'left',
+          whiteSpace: 'pre-line',
+          border: '1px solid white',
+        }}
+      ></textarea>
+      <p>
         <button
           onClick={(event) => {
             event.preventDefault()
-            validate()
+            navigator.clipboard.writeText(query1)
           }}
         >
-          Validate
+          Copy Query N°1
         </button>
+      </p>
+      <p>
+        External Total Credit:{' '}
+        <input
+          type="text"
+          value={externalTotalCredit}
+          onChange={(event) =>
+            parseInt(event.target.value) &&
+            setExternalTotalCredit(parseInt(event.target.value))
+          }
+        />
+      </p>
+      <p>
+        External Payments Quantity:{' '}
+        <input
+          type="text"
+          value={externalPaymentsQuantity}
+          onChange={(event) =>
+            parseInt(event.target.value) &&
+            setExternalPaymentsQuantity(parseInt(event.target.value))
+          }
+        />
+      </p>
+      <input
+        type="file"
+        onChange={(event) => setFile(event.currentTarget.files)}
+      />
+      <button
+        disabled={
+          externalOperationNumber === 0 ||
+          externalPaymentsQuantity === 0 ||
+          externalTotalCredit === 0 ||
+          file === undefined
+        }
+        onClick={(event) => {
+          event.preventDefault()
+          validate()
+        }}
+      >
+        Validate
+      </button>
 
-        <>
-          <p
-            style={
-              fileOperationNumber === externalOperationNumber
-                ? { color: 'green' }
-                : { color: 'red' }
+      <p
+        style={
+          fileOperationNumber === externalOperationNumber
+            ? { color: 'green' }
+            : { color: 'red' }
+        }
+      >
+        File Operation Number: <b>{fileOperationNumber}</b>
+      </p>
+      <p
+        style={
+          fileTotalCredit - externalTotalCredit <= 100 &&
+          fileTotalCredit - externalTotalCredit >= -100
+            ? { color: 'green' }
+            : { color: 'red' }
+        }
+      >
+        File Total Credit: <b>{fileTotalCredit}</b>
+      </p>
+      <p
+        style={
+          fileTotalCredit - externalTotalCredit <= 100 &&
+          fileTotalCredit - externalTotalCredit >= -100
+            ? { color: 'green' }
+            : { color: 'red' }
+        }
+      >
+        Total Credit Difference: <b>{fileTotalCredit - externalTotalCredit}</b>
+      </p>
+      <p
+        style={
+          filePaymentsQuantity === externalPaymentsQuantity
+            ? { color: 'green' }
+            : { color: 'red' }
+        }
+      >
+        File Payments Quantity: <b>{filePaymentsQuantity}</b>
+      </p>
+      <p>
+        <button
+          disabled={
+            fileOperationNumber !== externalOperationNumber ||
+            fileTotalCredit - externalTotalCredit >= 100 ||
+            fileTotalCredit - externalTotalCredit <= -100 ||
+            filePaymentsQuantity !== externalPaymentsQuantity
+          }
+          onClick={(event) => {
+            event.preventDefault()
+            try {
+              file && validateData(file[0], sheetName, 'B')
+            } catch (error) {
+              console.error(error)
             }
-          >
-            File Operation Number: <b>{fileOperationNumber}</b>
-          </p>
-          <p
-            style={
-              fileTotalCredit - externalTotalCredit <= 100
-                ? { color: 'green' }
-                : { color: 'red' }
+          }}
+        >
+          Validate data
+        </button>
+      </p>
+      <div>
+        <div>
+          <input
+            type="radio"
+            id="peso"
+            value="peso"
+            checked={currency === 'peso'}
+            onChange={() => setCurrency('peso')}
+          />
+          <label htmlFor="peso">Peso</label>
+        </div>
+
+        <div>
+          <input
+            type="radio"
+            id="usd"
+            value="usd"
+            checked={currency === 'usd'}
+            onChange={() => setCurrency('usd')}
+          />
+          <label htmlFor="usd">USD</label>
+        </div>
+      </div>
+      <p>
+        <button
+          disabled={
+            fileOperationNumber !== externalOperationNumber ||
+            fileTotalCredit - externalTotalCredit >= 100 ||
+            fileTotalCredit - externalTotalCredit <= -100 ||
+            filePaymentsQuantity !== externalPaymentsQuantity
+          }
+          onClick={async (event) => {
+            event.preventDefault()
+            try {
+              if (file) {
+                const updateQueries = await createUpdateQueries(
+                  file[0],
+                  sheetName,
+                  'B'
+                )
+                setQuery2(updateQueries)
+              }
+            } catch (error) {
+              console.error(error)
             }
-          >
-            File Total Credit: <b>{fileTotalCredit}</b>
-          </p>
-          <p
-            style={
-              filePaymentsQuantity === externalPaymentsQuantity
-                ? { color: 'green' }
-                : { color: 'red' }
-            }
-          >
-            File Payments Quantity: <b>{filePaymentsQuantity}</b>
-          </p>
-          <p>
-            <button
-              onClick={(event) => {
-                event.preventDefault()
-                try {
-                  file && validateData(file[0], 'WEBPCF', 'B')
-                } catch (error) {
-                  console.error(error)
-                }
-              }}
-            >
-              Validate data
-            </button>
-          </p>
-          <p>
-            <button
-              onClick={(event) => {
-                event.preventDefault()
-                try {
-                  file && createUpdateQueries(file[0], 'WEBPCF', 'B')
-                } catch (error) {
-                  console.error(error)
-                }
-              }}
-            >
-              Create Queries
-            </button>
-          </p>
-          <p>Update queries:</p>
-          <p
-            style={{
-              textAlign: 'left',
-              whiteSpace: 'pre-line',
-              border: '1px solid white',
-              maxHeight: '15rem',
-              overflowY: 'scroll',
-            }}
-          >
-            {updateQuery}
-          </p>
-          <p
-            style={{
-              textAlign: 'left',
-              whiteSpace: 'pre-line',
-              border: '1px solid white',
-              maxHeight: '15rem',
-              overflowY: 'scroll',
-            }}
-          >
-            {`use sca_hipotec
-              GO
-
-              DECLARE @FLD_COL_OPER	INT
-              ,		@FLD_FIN_FPDE	DATETIME
-              ,		@num_liq		int
-
-                    SET @FLD_COL_OPER = ${externalOperationNumber}
-
-
-                    SELECT @FLD_FIN_FPDE = FLD_FIN_FPDE FROM SCA_HIPOTEC..FIN WHERE FLD_FIN_OPER = @FLD_COL_OPER 
-                    
-                    EXEC SCA_HIPOTEC..SVC_PRO_CONT2 @FLD_COL_OPER, 0, 0, '1', @FLD_FIN_FPDE, '', '', @num_liq Output
-
-              UPDATE	SCA_HIPOTEC..SOL
-                SET	FLD_SOL_ESOL	= '3',
-                  FLD_SOL_RES		= '3'
-              WHERE	FLD_SOL_OPER	= @FLD_COL_OPER
-
-              UPDATE SCA_HIPOTEC..FIN
-                SET FLD_FIN_EST = '3'
-              WHERE FLD_FIN_OPER = @FLD_COL_OPER
-
-              UPDATE SCA_HIPOTEC..TRC 
-              SET FLD_TRC_FPRO = '19900101'
-              WHERE FLD_TRC_OPER = @FLD_COL_OPER AND
-                  FLD_TRC_NLIQ != @NUM_LIQ AND
-                  FLD_TRC_FPRO = 0 AND
-                  FLD_TRC_ASN IN ('SCA1','SCA26' /*OTORGAMIENTOS*/,'SCA5'/*REVERSA OTORGAMIENTO*/,'SCA33'/*OTORGAMIENTO DE RECUPERO*/)
-
-
-
-              /*RESPALDA DATOS DE TABLA FIN Y COL EN BASE DE DATOS HISTORICO*/
-              INSERT INTO SCA_HISTORICO..THIS_FIN
-              (THIS_FIN_OPER, THIS_FIN_MOS, THIS_FIN_FOTO, THIS_FIN_FPDE, THIS_FIN_PLA, THIS_FIN_GNOT, THIS_FIN_MOT, THIS_FIN_INST, THIS_FIN_ICAP, THIS_FIN_MIMP, THIS_FIN_NLIQ)
-              SELECT FLD_FIN_OPER, FLD_FIN_MOS, FLD_FIN_FOTO, FLD_FIN_FPDE, FLD_FIN_PLA, FLD_FIN_GNOT, FLD_FIN_MOT, FLD_FIN_INST, FLD_FIN_ICAP, FLD_FIN_MIMP, @num_liq
-              FROM SCA_HIPOTEC..FIN
-              WHERE FLD_FIN_OPER=@FLD_COL_OPER
-
-              INSERT INTO SCA_HISTORICO..THIS_COL
-              (THIS_COL_OPER, THIS_COL_FVEN, THIS_COL_AMOR, THIS_COL_NCU, THIS_COL_INT, THIS_COL_CUO, THIS_COL_ECLP, THIS_COL_NDOC, THIS_COL_SEGU, THIS_COL_NLIQ)
-              SELECT FLD_COL_OPER, FLD_COL_FVEN, FLD_COL_AMOR, FLD_COL_NCU, FLD_COL_INT, FLD_COL_CUO , FLD_COL_ECLP, FLD_COL_NDOC, FLD_COL_SEGU, @num_liq
-              FROM SCA_HIPOTEC..COL
-              WHERE FLD_COL_OPER=@FLD_COL_OPER
-
-
-
-              --- PARA LOS CASOS DE CUOTAS QUE ENTRAN VENCIDAS
-              UPDATE SCA_ADMINI..TCO
-              SET FLD_TCO_FPDI = (SELECT MIN(FLD_COL_FVEN) FROM SCA_HIPOTEC..COL WHERE FLD_COL_OPER = @FLD_COL_OPER )
-              WHERE FLD_TCO_OPER = @FLD_COL_OPER`}
-          </p>
-        </>
-      </form>
+          }}
+        >
+          Create Update Queries
+        </button>
+      </p>
+      <p>Update queries:</p>
+      <textarea
+        disabled
+        value={query2}
+        style={{
+          width: '100%',
+          minHeight: '10rem',
+          resize: 'none',
+          textAlign: 'left',
+          whiteSpace: 'pre-line',
+          border: '1px solid white',
+        }}
+      ></textarea>
+      <p>
+        <button
+          onClick={(event) => {
+            event.preventDefault()
+            navigator.clipboard.writeText(query2)
+          }}
+        >
+          Copy Query N°2
+        </button>
+      </p>
+      <p
+        style={{
+          textAlign: 'left',
+          whiteSpace: 'pre-line',
+          border: '1px solid white',
+          maxHeight: '15rem',
+          overflowY: 'scroll',
+        }}
+      >
+        {query3}
+      </p>
+      <p>
+        <button
+          onClick={(event) => {
+            event.preventDefault()
+            navigator.clipboard.writeText(query3)
+          }}
+        >
+          Copy Query N°3
+        </button>
+      </p>
     </>
   )
 }
