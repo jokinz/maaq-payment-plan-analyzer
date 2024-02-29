@@ -181,15 +181,26 @@ function App() {
                     XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 6 })
                   ]?.v
 
-                // TODO: add validation logic
-                console.log([
-                  seguros + intereses + amortizacion - cuota,
+                if (
+                  seguros + intereses + amortizacion - cuota !== 0 ||
                   saldoInsoluto -
                     siguienteAmortizacion -
-                    siguienteSaldoInsoluto,
-                  siguienteNumCuota - numCuota,
-                  siguienteFechVenc - fechVenc,
-                ])
+                    siguienteSaldoInsoluto !==
+                    0 ||
+                  siguienteNumCuota - numCuota !== 1 ||
+                  siguienteFechVenc - fechVenc < 28 ||
+                  siguienteFechVenc - fechVenc > 31
+                ) {
+                  console.error(`Error de validación en cuota N°: ${numCuota}` )
+                }
+                // console.log([
+                //   seguros + intereses + amortizacion - cuota,
+                //   saldoInsoluto -
+                //     siguienteAmortizacion -
+                //     siguienteSaldoInsoluto,
+                //   siguienteNumCuota - numCuota,
+                //   siguienteFechVenc - fechVenc,
+                // ])
               }
             }
 
@@ -248,7 +259,6 @@ function App() {
                   sheet[
                     XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 1 })
                   ]?.v
-                console.log(fechVenc)
                 const cuota =
                   sheet[
                     XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 2 })
@@ -286,7 +296,6 @@ function App() {
                   const fld_col_amor = Math.trunc(Math.round(rowData.E10))
                   const fld_col_int = Math.trunc(Math.round(rowData.F10))
                   const fld_col_fven = excelDateToFormattedDate(rowData.C10)
-                  console.log(fld_col_fven)
                   const fld_col_segu = Math.trunc(Math.round(rowData.G10))
                   const fld_col_cuo = Math.trunc(Math.round(rowData.D10))
                   const fld_col_cuos = Math.trunc(
