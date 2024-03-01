@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import './App.css'
 
 import * as XLSX from 'xlsx'
+import { excelDateToFormattedDate } from './Utils'
+import { getDataQuery, updateQuery } from './Queries'
+
+type Countries = 'colombia' | 'chile'
+type Currencies = 'peso' | 'usd'
 
 function App() {
-  const [country, setCountry] = useState('colombia')
-  const [currency, setCurrency] = useState('peso')
+  const [country, setCountry] = useState<Countries>('colombia')
+  const [currency, setCurrency] = useState<Currencies>('peso')
 
   const sheetName: string = 'WEBPCF'
   const cellOperationNumber: string = country === 'colombia' ? 'C4' : 'C1'
@@ -15,79 +20,25 @@ function App() {
   // TODO: check if SFL is correct
   const targetDatabase = country === 'colombia' ? 'BT_SFCO' : 'SFL'
 
-  const [file, setFile] = useState<FileList | null>()
-
   const [externalOperationNumber, setExternalOperationNumber] =
     useState<number>(0)
   const [externalTotalCredit, setExternalTotalCredit] = useState<number>(0)
   const [externalPaymentsQuantity, setExternalPaymentsQuantity] =
     useState<number>(0)
 
+  const [file, setFile] = useState<FileList | null>(null)
+
   const [fileOperationNumber, setFileOperationNumber] = useState<number>(0)
   const [fileTotalCredit, setFileTotalCredit] = useState<number>(0)
   const [filePaymentsQuantity, setFilePaymentsQuantity] = useState<number>(0)
 
-  const query1 = `use ${targetDatabase}
-  GO
-  
-  SELECT SUM(FLD_COL_AMOR), NUM_CUOTAS = COUNT(1) FROM
-  SCA_HIPOTEC..COL 
-  WHERE FLD_COL_OPER = ${externalOperationNumber} 
-
-  SELECT * FROM SCA_ADMINI..TCO WHERE FLD_TCO_OPER =
-  ${externalOperationNumber}`
-  const [query2, setQuery2] = useState('')
-  const query3 = `use sca_hipotec
-  GO
-
-  DECLARE @FLD_COL_OPER	INT
-  ,		@FLD_FIN_FPDE	DATETIME
-  ,		@num_liq		int
-
-        SET @FLD_COL_OPER = ${externalOperationNumber}
-
-
-        SELECT @FLD_FIN_FPDE = FLD_FIN_FPDE FROM SCA_HIPOTEC..FIN WHERE FLD_FIN_OPER = @FLD_COL_OPER 
-        
-        EXEC SCA_HIPOTEC..SVC_PRO_CONT2 @FLD_COL_OPER, 0, 0, '1', @FLD_FIN_FPDE, '', '', @num_liq Output
-
-  UPDATE	SCA_HIPOTEC..SOL
-    SET	FLD_SOL_ESOL	= '3',
-      FLD_SOL_RES		= '3'
-  WHERE	FLD_SOL_OPER	= @FLD_COL_OPER
-
-  UPDATE SCA_HIPOTEC..FIN
-    SET FLD_FIN_EST = '3'
-  WHERE FLD_FIN_OPER = @FLD_COL_OPER
-
-  UPDATE SCA_HIPOTEC..TRC 
-  SET FLD_TRC_FPRO = '19900101'
-  WHERE FLD_TRC_OPER = @FLD_COL_OPER AND
-      FLD_TRC_NLIQ != @NUM_LIQ AND
-      FLD_TRC_FPRO = 0 AND
-      FLD_TRC_ASN IN ('SCA1','SCA26' /*OTORGAMIENTOS*/,'SCA5'/*REVERSA OTORGAMIENTO*/,'SCA33'/*OTORGAMIENTO DE RECUPERO*/)
-
-
-
-  /*RESPALDA DATOS DE TABLA FIN Y COL EN BASE DE DATOS HISTORICO*/
-  INSERT INTO SCA_HISTORICO..THIS_FIN
-  (THIS_FIN_OPER, THIS_FIN_MOS, THIS_FIN_FOTO, THIS_FIN_FPDE, THIS_FIN_PLA, THIS_FIN_GNOT, THIS_FIN_MOT, THIS_FIN_INST, THIS_FIN_ICAP, THIS_FIN_MIMP, THIS_FIN_NLIQ)
-  SELECT FLD_FIN_OPER, FLD_FIN_MOS, FLD_FIN_FOTO, FLD_FIN_FPDE, FLD_FIN_PLA, FLD_FIN_GNOT, FLD_FIN_MOT, FLD_FIN_INST, FLD_FIN_ICAP, FLD_FIN_MIMP, @num_liq
-  FROM SCA_HIPOTEC..FIN
-  WHERE FLD_FIN_OPER=@FLD_COL_OPER
-
-  INSERT INTO SCA_HISTORICO..THIS_COL
-  (THIS_COL_OPER, THIS_COL_FVEN, THIS_COL_AMOR, THIS_COL_NCU, THIS_COL_INT, THIS_COL_CUO, THIS_COL_ECLP, THIS_COL_NDOC, THIS_COL_SEGU, THIS_COL_NLIQ)
-  SELECT FLD_COL_OPER, FLD_COL_FVEN, FLD_COL_AMOR, FLD_COL_NCU, FLD_COL_INT, FLD_COL_CUO , FLD_COL_ECLP, FLD_COL_NDOC, FLD_COL_SEGU, @num_liq
-  FROM SCA_HIPOTEC..COL
-  WHERE FLD_COL_OPER=@FLD_COL_OPER
-
-
-
-  --- PARA LOS CASOS DE CUOTAS QUE ENTRAN VENCIDAS
-  UPDATE SCA_ADMINI..TCO
-  SET FLD_TCO_FPDI = (SELECT MIN(FLD_COL_FVEN) FROM SCA_HIPOTEC..COL WHERE FLD_COL_OPER = @FLD_COL_OPER )
-  WHERE FLD_TCO_OPER = @FLD_COL_OPER`
+  const query1: string = externalOperationNumber
+    ? getDataQuery(targetDatabase, externalOperationNumber)
+    : ''
+  const [query2, setQuery2] = useState<string>('')
+  const query3: string = externalOperationNumber
+    ? updateQuery(externalOperationNumber)
+    : ''
 
   function readCellValue(
     file: File,
@@ -425,25 +376,27 @@ function App() {
       }
     }
   }
+  const fileRef = useRef<HTMLInputElement>(null)
 
-  const excelDateToFormattedDate = (excelSerialDate: number) => {
-    const excelEpoch = new Date('1899-12-31T00:00:00.000Z')
-    const excelDate = new Date(
-      excelEpoch.getTime() + excelSerialDate * 24 * 60 * 60 * 1000
-    )
-
-    // Format the date in yyyymmdd format
-    const year = excelDate.getFullYear()
-    const month = (excelDate.getMonth() + 1).toString().padStart(2, '0') // Month is zero-based
-    const day = excelDate.getDate().toString().padStart(2, '0')
-
-    const formattedDate = `${year}${month}${day}`
-    return formattedDate
+  const restartValues = () => {
+    setCountry('colombia')
+    setCurrency('peso')
+    setExternalOperationNumber(0)
+    setExternalTotalCredit(0)
+    setExternalPaymentsQuantity(0)
+    setFile(null)
+    setFileOperationNumber(0)
+    setFileTotalCredit(0)
+    setFilePaymentsQuantity(0)
+    setQuery2('')
+    if (fileRef.current) {
+      fileRef.current.value = ''
+    }
   }
-
   return (
     <>
       <p>Country: </p>
+
       <div>
         <div>
           <input
@@ -471,27 +424,18 @@ function App() {
         External Operation Number:{' '}
         <input
           type="text"
-          value={externalOperationNumber}
+          value={externalOperationNumber ? externalOperationNumber : ''}
           onChange={(event) =>
             parseInt(event.target.value) &&
             setExternalOperationNumber(parseInt(event.target.value))
           }
         />
       </p>
-      <textarea
-        disabled
-        value={externalOperationNumber && query1}
-        style={{
-          width: '100%',
-          minHeight: '10rem',
-          resize: 'none',
-          textAlign: 'left',
-          whiteSpace: 'pre-line',
-          border: '1px solid white',
-        }}
-      ></textarea>
+      <textarea disabled value={query1} className="textarea-query"></textarea>
+
       <p>
         <button
+          disabled={query1 === ''}
           onClick={(event) => {
             event.preventDefault()
             navigator.clipboard.writeText(query1)
@@ -504,7 +448,7 @@ function App() {
         External Total Credit:{' '}
         <input
           type="text"
-          value={externalTotalCredit}
+          value={externalTotalCredit !== 0 ? externalTotalCredit : ''}
           onChange={(event) =>
             parseInt(event.target.value) &&
             setExternalTotalCredit(parseInt(event.target.value))
@@ -515,7 +459,7 @@ function App() {
         External Payments Quantity:{' '}
         <input
           type="text"
-          value={externalPaymentsQuantity}
+          value={externalPaymentsQuantity !== 0 ? externalPaymentsQuantity : ''}
           onChange={(event) =>
             parseInt(event.target.value) &&
             setExternalPaymentsQuantity(parseInt(event.target.value))
@@ -523,6 +467,7 @@ function App() {
         />
       </p>
       <input
+        ref={fileRef}
         type="file"
         onChange={(event) => setFile(event.currentTarget.files)}
       />
@@ -531,7 +476,7 @@ function App() {
           externalOperationNumber === 0 ||
           externalPaymentsQuantity === 0 ||
           externalTotalCredit === 0 ||
-          file === undefined
+          file === null
         }
         onClick={(event) => {
           event.preventDefault()
@@ -541,47 +486,53 @@ function App() {
         Validate
       </button>
 
-      <p
-        style={
-          fileOperationNumber === externalOperationNumber
-            ? { color: 'green' }
-            : { color: 'red' }
-        }
-      >
-        File Operation Number: <b>{fileOperationNumber}</b>
-      </p>
-      <p
-        style={
-          fileTotalCredit - externalTotalCredit <= 100 &&
-          fileTotalCredit - externalTotalCredit >= -100
-            ? { color: 'green' }
-            : { color: 'red' }
-        }
-      >
-        File Total Credit: <b>{fileTotalCredit}</b>
-      </p>
-      <p
-        style={
-          fileTotalCredit - externalTotalCredit <= 100 &&
-          fileTotalCredit - externalTotalCredit >= -100
-            ? { color: 'green' }
-            : { color: 'red' }
-        }
-      >
-        Total Credit Difference: <b>{fileTotalCredit - externalTotalCredit}</b>
-      </p>
-      <p
-        style={
-          filePaymentsQuantity === externalPaymentsQuantity
-            ? { color: 'green' }
-            : { color: 'red' }
-        }
-      >
-        File Payments Quantity: <b>{filePaymentsQuantity}</b>
-      </p>
+      {file && (
+        <>
+          <p
+            style={
+              fileOperationNumber === externalOperationNumber
+                ? { color: 'green' }
+                : { color: 'red' }
+            }
+          >
+            File Operation Number: <b>{fileOperationNumber}</b>
+          </p>
+          <p
+            style={
+              fileTotalCredit - externalTotalCredit <= 100 &&
+              fileTotalCredit - externalTotalCredit >= -100
+                ? { color: 'green' }
+                : { color: 'red' }
+            }
+          >
+            File Total Credit: <b>{fileTotalCredit}</b>
+          </p>
+          <p
+            style={
+              fileTotalCredit - externalTotalCredit <= 100 &&
+              fileTotalCredit - externalTotalCredit >= -100
+                ? { color: 'green' }
+                : { color: 'red' }
+            }
+          >
+            Total Credit Difference:{' '}
+            <b>{fileTotalCredit - externalTotalCredit}</b>
+          </p>
+          <p
+            style={
+              filePaymentsQuantity === externalPaymentsQuantity
+                ? { color: 'green' }
+                : { color: 'red' }
+            }
+          >
+            File Payments Quantity: <b>{filePaymentsQuantity}</b>
+          </p>
+        </>
+      )}
       <p>
         <button
           disabled={
+            !file ||
             fileOperationNumber !== externalOperationNumber ||
             fileTotalCredit - externalTotalCredit >= 100 ||
             fileTotalCredit - externalTotalCredit <= -100 ||
@@ -590,7 +541,7 @@ function App() {
           onClick={(event) => {
             event.preventDefault()
             try {
-              file && validateData(file[0], sheetName, 'B')
+              file && validateData(file[0], sheetName, paymentNumberColumn)
             } catch (error) {
               console.error(error)
             }
@@ -628,7 +579,8 @@ function App() {
             fileOperationNumber !== externalOperationNumber ||
             fileTotalCredit - externalTotalCredit >= 100 ||
             fileTotalCredit - externalTotalCredit <= -100 ||
-            filePaymentsQuantity !== externalPaymentsQuantity
+            filePaymentsQuantity !== externalPaymentsQuantity ||
+            file === null
           }
           onClick={async (event) => {
             event.preventDefault()
@@ -637,7 +589,7 @@ function App() {
                 const updateQueries = await createUpdateQueries(
                   file[0],
                   sheetName,
-                  'B'
+                  paymentNumberColumn
                 )
                 setQuery2(updateQueries)
               }
@@ -650,20 +602,10 @@ function App() {
         </button>
       </p>
       <p>Update queries:</p>
-      <textarea
-        disabled
-        value={query2}
-        style={{
-          width: '100%',
-          minHeight: '10rem',
-          resize: 'none',
-          textAlign: 'left',
-          whiteSpace: 'pre-line',
-          border: '1px solid white',
-        }}
-      ></textarea>
+      <textarea disabled value={query2} className="textarea-query"></textarea>
       <p>
         <button
+          disabled={query2 === ''}
           onClick={(event) => {
             event.preventDefault()
             navigator.clipboard.writeText(query2)
@@ -672,19 +614,10 @@ function App() {
           Copy Query N°2
         </button>
       </p>
-      <p
-        style={{
-          textAlign: 'left',
-          whiteSpace: 'pre-line',
-          border: '1px solid white',
-          maxHeight: '15rem',
-          overflowY: 'scroll',
-        }}
-      >
-        {query3}
-      </p>
+      <textarea disabled value={query3} className="textarea-query"></textarea>
       <p>
         <button
+          disabled={query3 === ''}
           onClick={(event) => {
             event.preventDefault()
             navigator.clipboard.writeText(query3)
@@ -693,6 +626,12 @@ function App() {
           Copy Query N°3
         </button>
       </p>
+      <button
+        style={{ position: 'fixed', right: '2rem', bottom: '2rem' }}
+        onClick={() => restartValues()}
+      >
+        Restart
+      </button>
     </>
   )
 }
