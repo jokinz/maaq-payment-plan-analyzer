@@ -209,14 +209,6 @@ function App() {
                 ) {
                   alert(`Error de validación en cuota N°: ${numCuota}`)
                 }
-                // console.log([
-                //   seguros + intereses + amortizacion - cuota,
-                //   saldoInsoluto -
-                //     siguienteAmortizacion -
-                //     siguienteSaldoInsoluto,
-                //   siguienteNumCuota - numCuota,
-                //   siguienteFechVenc - fechVenc,
-                // ])
               }
             }
 
@@ -257,8 +249,7 @@ function App() {
             const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
             const colIndex = XLSX.utils.decode_col(columnName)
 
-            let concatenatedQueries = `use ${targetDatabase}
-            GO \n`
+            let concatenatedQueries = `use SCA_HIPOTEC\nGO\n`
 
             for (
               let rowIndex = columnRange.s.r;
