@@ -595,7 +595,6 @@ function App() {
         </button>
       </p>
       <p>Update queries:</p>
-      <textarea disabled value={query2} className="textarea-query"></textarea>
       <Query content={query2}></Query>
       <p>
         <button
