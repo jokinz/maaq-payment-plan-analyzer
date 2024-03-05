@@ -403,6 +403,7 @@ function App() {
 
         <div>
           <input
+          disabled
             type="radio"
             id="chile"
             value="chile"
@@ -555,6 +556,7 @@ function App() {
 
         <div>
           <input
+          disabled
             type="radio"
             id="usd"
             value="usd"
