@@ -4,6 +4,7 @@ import './App.css'
 import * as XLSX from 'xlsx'
 import { excelDateToFormattedDate } from './Utils'
 import { getDataQuery, updateQuery } from './Queries'
+import Query from './components/Query'
 
 type Countries = 'colombia' | 'chile'
 type Currencies = 'peso' | 'usd'
@@ -431,8 +432,7 @@ function App() {
           }
         />
       </p>
-      <textarea disabled value={query1} className="textarea-query"></textarea>
-
+      <Query content={query1}></Query>
       <p>
         <button
           disabled={query1 === ''}
@@ -603,6 +603,7 @@ function App() {
       </p>
       <p>Update queries:</p>
       <textarea disabled value={query2} className="textarea-query"></textarea>
+      <Query content={query2}></Query>
       <p>
         <button
           disabled={query2 === ''}
@@ -614,7 +615,7 @@ function App() {
           Copy Query N°2
         </button>
       </p>
-      <textarea disabled value={query3} className="textarea-query"></textarea>
+      <Query content={query3}></Query>
       <p>
         <button
           disabled={query3 === ''}
