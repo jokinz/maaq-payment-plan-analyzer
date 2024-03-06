@@ -8,6 +8,25 @@ import Query from './components/Query'
 
 type Countries = 'colombia' | 'chile'
 type Currencies = 'peso' | 'usd'
+type Status = {
+  value: number
+  text: string
+}
+const StatusList: Status[] = [
+  { value: 0, text: 'VIGENTE' },
+  { value: 1, text: 'CANCELADA' },
+  { value: 10, text: 'CANCELADO SINESTRADO' },
+  { value: 11, text: 'DEVOLUCION VOLUNTARIA' },
+  { value: 12, text: 'CANCELADO PREPAGO' },
+  { value: 2, text: 'EXTINGUIDA' },
+  { value: 3, text: 'CASTIGO NO RECUPERADO' },
+  { value: 4, text: 'VENCIDAS INCONSISTENTES' },
+  { value: 5, text: 'CANCELADO MODIFICADO' },
+  { value: 6, text: 'CANCELADO - REPROGRAMADO' },
+  { value: 7, text: 'ANULADO' },
+  { value: 8, text: 'INCOBRABLE' },
+  { value: 9, text: 'CANCELADO NOVADO' },
+]
 
 function App() {
   const [country, setCountry] = useState<Countries>('colombia')
@@ -41,6 +60,9 @@ function App() {
     ? updateQuery(externalOperationNumber)
     : ''
 
+  const [sourceOperation, setSourceOperation] = useState(0)
+  const [targetOperation, setTargetOperation] = useState(0)
+  const [selectedStatus, setSelectedStatus] = useState<number>(-1)
   function readCellValue(
     file: File,
     sheetName: string,
@@ -387,8 +409,8 @@ function App() {
   }
   return (
     <>
-      <p>Country: </p>
-
+      <h2>Aplicación de plan de pago</h2>
+      <p>País: </p>
       <div>
         <div>
           <input
@@ -403,7 +425,7 @@ function App() {
 
         <div>
           <input
-          disabled
+            disabled
             type="radio"
             id="chile"
             value="chile"
@@ -414,7 +436,7 @@ function App() {
         </div>
       </div>
       <p>
-        External Operation Number:{' '}
+        Número de Operación:
         <input
           type="text"
           value={externalOperationNumber ? externalOperationNumber : ''}
@@ -426,18 +448,7 @@ function App() {
       </p>
       <Query content={query1}></Query>
       <p>
-        <button
-          disabled={query1 === ''}
-          onClick={(event) => {
-            event.preventDefault()
-            navigator.clipboard.writeText(query1)
-          }}
-        >
-          Copy Query N°1
-        </button>
-      </p>
-      <p>
-        External Total Credit:{' '}
+        Crédito Total:
         <input
           type="text"
           value={externalTotalCredit !== 0 ? externalTotalCredit : ''}
@@ -448,7 +459,7 @@ function App() {
         />
       </p>
       <p>
-        External Payments Quantity:{' '}
+        Cantidad de pagos:{' '}
         <input
           type="text"
           value={externalPaymentsQuantity !== 0 ? externalPaymentsQuantity : ''}
@@ -475,9 +486,9 @@ function App() {
           validate()
         }}
       >
-        Validate
+        Validar
       </button>
-
+      <h3>Datos del archivo</h3>
       {file && (
         <>
           <p
@@ -487,27 +498,33 @@ function App() {
                 : { color: 'red' }
             }
           >
-            File Operation Number: <b>{fileOperationNumber}</b>
+            Número de Operación: <b>{fileOperationNumber}</b>
           </p>
           <p
-            style={
-              fileTotalCredit - externalTotalCredit <= 100 &&
-              fileTotalCredit - externalTotalCredit >= -100
-                ? { color: 'green' }
-                : { color: 'red' }
-            }
+            style={{
+              color:
+                fileTotalCredit - externalTotalCredit === 0
+                  ? 'green'
+                  : fileTotalCredit - externalTotalCredit <= 100 &&
+                    fileTotalCredit - externalTotalCredit >= -100
+                  ? 'yellow'
+                  : 'red',
+            }}
           >
-            File Total Credit: <b>{fileTotalCredit}</b>
+            Crédito Total: <b>{fileTotalCredit}</b>
           </p>
           <p
-            style={
-              fileTotalCredit - externalTotalCredit <= 100 &&
-              fileTotalCredit - externalTotalCredit >= -100
-                ? { color: 'green' }
-                : { color: 'red' }
-            }
+            style={{
+              color:
+                fileTotalCredit - externalTotalCredit === 0
+                  ? 'green'
+                  : fileTotalCredit - externalTotalCredit <= 100 &&
+                    fileTotalCredit - externalTotalCredit >= -100
+                  ? 'yellow'
+                  : 'red',
+            }}
           >
-            Total Credit Difference:{' '}
+            Diferencia de crédito:
             <b>{fileTotalCredit - externalTotalCredit}</b>
           </p>
           <p
@@ -517,7 +534,7 @@ function App() {
                 : { color: 'red' }
             }
           >
-            File Payments Quantity: <b>{filePaymentsQuantity}</b>
+            Cantidad de cuotas: <b>{filePaymentsQuantity}</b>
           </p>
         </>
       )}
@@ -539,7 +556,7 @@ function App() {
             }
           }}
         >
-          Validate data
+          Validar datos
         </button>
       </p>
       <div>
@@ -556,7 +573,7 @@ function App() {
 
         <div>
           <input
-          disabled
+            disabled
             type="radio"
             id="usd"
             value="usd"
@@ -594,31 +611,96 @@ function App() {
           Create Update Queries
         </button>
       </p>
-      <p>Update queries:</p>
+      <p>Update queries: </p>
       <Query content={query2}></Query>
-      <p>
-        <button
-          disabled={query2 === ''}
-          onClick={(event) => {
-            event.preventDefault()
-            navigator.clipboard.writeText(query2)
-          }}
-        >
-          Copy Query N°2
-        </button>
-      </p>
       <Query content={query3}></Query>
+      <h2>Traspaso de bienes y baja</h2>
+
       <p>
-        <button
-          disabled={query3 === ''}
-          onClick={(event) => {
+        <label htmlFor="targetOperation">Operación Objetivo: </label>
+        <input
+          id="targetOperation"
+          value={targetOperation}
+          onChange={(event) => {
             event.preventDefault()
-            navigator.clipboard.writeText(query3)
+            setTargetOperation(parseInt(event.target.value))
           }}
-        >
-          Copy Query N°3
-        </button>
+        />
       </p>
+      <p>
+        <label htmlFor="sourceOperation">Operation Fuente: </label>
+        <input
+          id="sourceOperation"
+          value={sourceOperation}
+          onChange={(event) => {
+            event.preventDefault()
+            setSourceOperation(parseInt(event.target.value))
+          }}
+        />
+      </p>
+      <Query
+        content={
+          targetOperation
+            ? `SELECT * FROM SCA_ADMINI..GAR WHERE FLD_GAR_OPER = ${targetOperation}`
+            : ''
+        }
+      ></Query>
+      <Query
+        content={
+          targetOperation
+            ? `DELETE FROM SCA_ADMINI..GAR WHERE FLD_GAR_OPER = ${targetOperation}`
+            : ''
+        }
+      ></Query>
+      <Query
+        content={
+          targetOperation && sourceOperation
+            ? `INSERT INTO SCA_ADMINI..GAR
+       SELECT ${targetOperation} , FLD_GAR_NCHASIS,FLD_GAR_NMOT,FLD_GAR_MODB,FLD_GAR_TIPB,FLD_GAR_ESTB,FLD_GAR_PRD,FLD_GAR_SUC,FLD_GAR_MON
+,FLD_GAR_ACO,FLD_GAR_CAL,FLD_GAR_CIU,FLD_GAR_COM,FLD_GAR_REG,FLD_GAR_FTAS,FLD_GAR_HIP,FLD_GAR_IBRA,FLD_GAR_IBRF,FLD_GAR_IBRN
+,FLD_GAR_NBO,FLD_GAR_NOT,FLD_GAR_NUE,FLD_GAR_ROLC1,FLD_GAR_ROLC2,FLD_GAR_SUCC,FLD_GAR_SUT,FLD_GAR_TGAR,FLD_GAR_TIB,FLD_GAR_VAT
+,FLD_GAR_VCO,FLD_GAR_VSIM,FLD_GAR_TIPO,FLD_GAR_MVEH,FLD_GAR_MODV, FLD_GAR_FEJE,FLD_GAR_TBI,FLD_GAR_TIC,FLD_GAR_DES
+,FLD_GAR_IBRC,FLD_GAR_TBIEN,FLD_GAR_MODELO,FLD_GAR_FIBR,FLD_GAR_BLOC,FLD_GAR_DEPTO,FLD_GAR_CBR,FLD_GAR_IBRA2,FLD_GAR_DIRN
+,FLD_GAR_CPOS,FLD_GAR_VMKD,FLD_GAR_POLI,FLD_GAR_MONB,FLD_GAR_FDEP,FLD_GAR_TCOMB,FLD_GAR_EASEG,FLD_GAR_NUMFAC,FLD_GAR_FEMFAC,FLD_GAR_MTOFAC
+       ,FLD_GAR_OTGR,FLD_GAR_BENL,FLD_GAR_ITEM 
+       FROM SCA_ADMINI..GAR INNER JOIN SCA_ADMINI..TCO ON FLD_GAR_OPER = FLD_TCO_OPER
+       WHERE FLD_GAR_OPER IN(${sourceOperation})
+--     AND LTRIM(RTRIM(FLD_GAR_BLOC)) NOT IN('RHDP79')
+       ORDER BY  FLD_GAR_BLOC
+`
+            : ''
+        }
+      ></Query>
+
+      {sourceOperation !== 0 && (
+        <>
+          <label htmlFor="selectedStatus">Status: </label>
+          <select
+            defaultValue={-1}
+            value={selectedStatus}
+            onChange={(event) =>
+              setSelectedStatus(parseInt(event.target.value))
+            }
+            name="selectedStatus"
+            id="selectedStatus"
+          >
+            <option disabled value={-1}>
+              Select status
+            </option>
+            {StatusList.map((status) => {
+              return <option value={status.value}>{status.text}</option>
+            })}
+          </select>
+          {selectedStatus !== -1 && (
+            <Query
+              content={`UPDATE SCA_ADMINI..TCO 
+       SET FLD_TCO_EOPE = '${selectedStatus}'
+       WHERE  FLD_TCO_OPER IN(${sourceOperation}) --1`}
+            ></Query>
+          )}
+        </>
+      )}
+
       <button
         style={{ position: 'fixed', right: '2rem', bottom: '2rem' }}
         onClick={() => restartValues()}
