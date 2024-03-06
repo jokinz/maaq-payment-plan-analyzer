@@ -1,4 +1,4 @@
-#root {
+#reactApp {
   min-width: 50rem;
   max-width: 90%;
   margin: 0 auto;
@@ -13,4 +13,5 @@
   text-align: left;
   white-space: pre-line;
   border: 1px solid white;
+  box-sizing: border-box;
 }
