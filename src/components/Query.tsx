@@ -1,12 +1,16 @@
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+
+
 function Query(props: { content: string; disabled?: boolean }) {
   return (
     <p style={{ textAlign: 'right' }}>
-      <textarea
+      <Textarea
         disabled
         value={props.content}
         className="textarea-query"
-      ></textarea>
-      <button
+      ></Textarea>
+      <Button
         disabled={props.content === ''}
         onClick={(event) => {
           event.preventDefault()
@@ -14,7 +18,7 @@ function Query(props: { content: string; disabled?: boolean }) {
         }}
       >
         Copiar
-      </button>
+      </Button>
     </p>
   )
 }

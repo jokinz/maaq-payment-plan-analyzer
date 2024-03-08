@@ -1,41 +1,54 @@
 import { useState } from 'react'
+
 import '../App.css'
 
 import Query from './Query'
 
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Label } from './ui/label'
+
 type Status = {
-  value: number
+  value: string
   text: string
 }
 const StatusList: Status[] = [
-  { value: 0, text: 'VIGENTE' },
-  { value: 1, text: 'CANCELADA' },
-  { value: 10, text: 'CANCELADO SINESTRADO' },
-  { value: 11, text: 'DEVOLUCION VOLUNTARIA' },
-  { value: 12, text: 'CANCELADO PREPAGO' },
-  { value: 2, text: 'EXTINGUIDA' },
-  { value: 3, text: 'CASTIGO NO RECUPERADO' },
-  { value: 4, text: 'VENCIDAS INCONSISTENTES' },
-  { value: 5, text: 'CANCELADO MODIFICADO' },
-  { value: 6, text: 'CANCELADO - REPROGRAMADO' },
-  { value: 7, text: 'ANULADO' },
-  { value: 8, text: 'INCOBRABLE' },
-  { value: 9, text: 'CANCELADO NOVADO' },
+  { value: '0', text: 'VIGENTE' },
+  { value: '1', text: 'CANCELADA' },
+  { value: '10', text: 'CANCELADO SINESTRADO' },
+  { value: '11', text: 'DEVOLUCION VOLUNTARIA' },
+  { value: '12', text: 'CANCELADO PREPAGO' },
+  { value: '2', text: 'EXTINGUIDA' },
+  { value: '3', text: 'CASTIGO NO RECUPERADO' },
+  { value: '4', text: 'VENCIDAS INCONSISTENTES' },
+  { value: '5', text: 'CANCELADO MODIFICADO' },
+  { value: '6', text: 'CANCELADO - REPROGRAMADO' },
+  { value: '7', text: 'ANULADO' },
+  { value: '8', text: 'INCOBRABLE' },
+  { value: '9', text: 'CANCELADO NOVADO' },
 ]
 
 function TraspasoDeBienesYBaja() {
   const [sourceOperation, setSourceOperation] = useState(0)
   const [targetOperation, setTargetOperation] = useState(0)
-  const [selectedStatus, setSelectedStatus] = useState<number>(-1)
+  const [selectedStatus, setSelectedStatus] = useState('')
   const [exception, setException] = useState('')
   const [exceptionsList, setExceptionsList] = useState<string[]>([])
+  console.log(selectedStatus)
 
   return (
-    <>
+    <div className="flex flex-col gap-3">
       <h2>Traspaso de bienes y baja</h2>
       <p>
-        <label htmlFor="targetOperation">Operación Objetivo: </label>
-        <input
+        <Label htmlFor="targetOperation">Operación Objetivo: </Label>
+        <Input
           id="targetOperation"
           value={targetOperation}
           onChange={(event) => {
@@ -44,8 +57,8 @@ function TraspasoDeBienesYBaja() {
         />
       </p>
       <p>
-        <label htmlFor="sourceOperation">Operation Fuente: </label>
-        <input
+        <Label htmlFor="sourceOperation">Operation Fuente: </Label>
+        <Input
           id="sourceOperation"
           value={sourceOperation}
           onChange={(event) => {
@@ -69,32 +82,32 @@ function TraspasoDeBienesYBaja() {
         }
       ></Query>
       <p>
-        <label htmlFor="exception">Excepción: </label>
-        <input
+        <Label htmlFor="exception">Excepción: </Label>
+        <Input
           id="exception"
           value={exception}
           onChange={(event) => {
             setException(event.target.value)
           }}
         />
-        <button
-          disabled={exception === ''}
-          onClick={(event) => {
-            event.preventDefault()
-            setExceptionsList((prevState) => [...prevState, exception])
-            setException('')
-          }}
-        >
-          Agregar
-        </button>
       </p>
+      <Button
+        disabled={exception === ''}
+        onClick={(event) => {
+          event.preventDefault()
+          setExceptionsList((prevState) => [...prevState, exception])
+          setException('')
+        }}
+      >
+        Agregar
+      </Button>
       {exceptionsList.length > 0 && (
         <>
           <p>Excepciones: </p>
           {exceptionsList.map((item, index) => (
             <p key={index}>
               {item}{' '}
-              <button
+              <Button
                 onClick={(event) => {
                   event.preventDefault()
                   setExceptionsList((prevState) =>
@@ -103,7 +116,7 @@ function TraspasoDeBienesYBaja() {
                 }}
               >
                 X
-              </button>
+              </Button>
             </p>
           ))}
         </>
@@ -136,8 +149,26 @@ function TraspasoDeBienesYBaja() {
 
       {sourceOperation !== 0 && (
         <>
-          <label htmlFor="selectedStatus">Nuevo estado: </label>
-          <select
+          <Label htmlFor="selectedStatus">Nuevo estado: </Label>
+          <Select
+            value={selectedStatus.toString()}
+            onValueChange={(value) => setSelectedStatus(value)}
+            name="selectedStatus"
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar" />
+            </SelectTrigger>
+            <SelectContent>
+              {StatusList.map((status, index) => {
+                return (
+                  <SelectItem key={index} value={status.value.toString()}>
+                    {status.text}
+                  </SelectItem>
+                )
+              })}
+            </SelectContent>
+          </Select>
+          {/* <select
             defaultValue={-1}
             value={selectedStatus}
             onChange={(event) =>
@@ -147,13 +178,13 @@ function TraspasoDeBienesYBaja() {
             id="selectedStatus"
           >
             <option disabled value={-1}>
-              Select status
+              Seleccionar
             </option>
             {StatusList.map((status) => {
               return <option value={status.value}>{status.text}</option>
             })}
-          </select>
-          {selectedStatus !== -1 && (
+          </select> */}
+          {selectedStatus !== '' && (
             <Query
               content={`UPDATE SCA_ADMINI..TCO 
        SET FLD_TCO_EOPE = '${selectedStatus}'
@@ -162,7 +193,7 @@ function TraspasoDeBienesYBaja() {
           )}
         </>
       )}
-    </>
+    </div>
   )
 }
 

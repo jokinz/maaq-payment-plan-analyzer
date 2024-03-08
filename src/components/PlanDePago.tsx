@@ -1,10 +1,18 @@
 import { useRef, useState } from 'react'
+
 import '../App.css'
 
 import * as XLSX from 'xlsx'
+
 import { excelDateToFormattedDate } from '../Utils'
 import { getDataQuery, updateQuery } from '../Queries'
+
 import Query from './Query'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 type Countries = 'colombia' | 'chile'
 type Currencies = 'peso' | 'usd'
@@ -386,47 +394,52 @@ function PlanDePago() {
     }
   }
   return (
-    <>
+    <div className="flex flex-col gap-3">
       <h2>Aplicación de plan de pago</h2>
-      <p>País: </p>
-      <div>
-        <input
-          type="radio"
-          id="colombia"
-          value="colombia"
-          checked={country === 'colombia'}
-          onChange={() => setCountry('colombia')}
-        />
-        <label htmlFor="colombia">Colombia</label>
-      </div>
+      <section className="grid grid-cols-2">
+        <div>
+          <p>País: </p>
+          <RadioGroup defaultValue="colombia">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem
+                value="colombia"
+                id="colombia"
+                checked={country === 'colombia'}
+                onChange={() => setCountry('colombia')}
+              />
+              <Label htmlFor="colombia">Colombia</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem
+                value="chile"
+                id="chile"
+                checked={country === 'chile'}
+                onChange={() => setCountry('chile')}
+              />
+              <Label htmlFor="chile">Chile</Label>
+            </div>
+          </RadioGroup>
+        </div>
+        <div>
+          <p>
+            <Label htmlFor="operationNumber">Número de Operación: </Label>
+            <Input
+              id="operationNumber"
+              type="text"
+              value={externalOperationNumber ? externalOperationNumber : ''}
+              onChange={(event) =>
+                parseInt(event.target.value) &&
+                setExternalOperationNumber(parseInt(event.target.value))
+              }
+            />
+          </p>
+        </div>
+      </section>
 
-      <div>
-        <input
-          disabled
-          type="radio"
-          id="chile"
-          value="chile"
-          checked={country === 'chile'}
-          onChange={() => setCountry('chile')}
-        />
-        <label htmlFor="chile">Chile</label>
-      </div>
-      <p>
-        <label htmlFor="operationNumber">Número de Operación: </label>
-        <input
-          id="operationNumber"
-          type="text"
-          value={externalOperationNumber ? externalOperationNumber : ''}
-          onChange={(event) =>
-            parseInt(event.target.value) &&
-            setExternalOperationNumber(parseInt(event.target.value))
-          }
-        />
-      </p>
       <Query content={query1}></Query>
       <p>
-        <label htmlFor="totalCredit">Crédito Total: </label>
-        <input
+        <Label htmlFor="totalCredit">Crédito Total: </Label>
+        <Input
           id="totalCredit"
           type="text"
           value={externalTotalCredit !== 0 ? externalTotalCredit : ''}
@@ -437,8 +450,8 @@ function PlanDePago() {
         />
       </p>
       <p>
-        <label htmlFor="externalPaymentsQuantity">Cantidad de pagos: </label>
-        <input
+        <Label htmlFor="externalPaymentsQuantity">Cantidad de pagos: </Label>
+        <Input
           id="externalPaymentsQuantity"
           type="text"
           value={externalPaymentsQuantity !== 0 ? externalPaymentsQuantity : ''}
@@ -448,12 +461,12 @@ function PlanDePago() {
           }
         />
       </p>
-      <input
+      <Input
         ref={fileRef}
         type="file"
         onChange={(event) => setFile(event.currentTarget.files)}
       />
-      <button
+      <Button
         disabled={
           externalOperationNumber === 0 ||
           externalPaymentsQuantity === 0 ||
@@ -466,7 +479,7 @@ function PlanDePago() {
         }}
       >
         Validar
-      </button>
+      </Button>
       <h3>Datos del archivo</h3>
       {file && (
         <>
@@ -518,7 +531,7 @@ function PlanDePago() {
         </>
       )}
       <p>
-        <button
+        <Button
           disabled={
             !file ||
             fileOperationNumber !== externalOperationNumber ||
@@ -536,34 +549,31 @@ function PlanDePago() {
           }}
         >
           Validar datos
-        </button>
+        </Button>
       </p>
-      <div>
-        <div>
-          <input
-            type="radio"
-            id="peso"
+      <RadioGroup defaultValue="peso">
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem
             value="peso"
+            id="peso"
             checked={currency === 'peso'}
             onChange={() => setCurrency('peso')}
           />
-          <label htmlFor="peso">Peso</label>
+          <Label htmlFor="peso">Peso</Label>
         </div>
-
-        <div>
-          <input
-            disabled
-            type="radio"
-            id="usd"
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem
             value="usd"
+            id="usd"
             checked={currency === 'usd'}
             onChange={() => setCurrency('usd')}
+            disabled
           />
-          <label htmlFor="usd">USD</label>
+          <Label htmlFor="usd">USD</Label>
         </div>
-      </div>
+      </RadioGroup>
       <p>
-        <button
+        <Button
           disabled={
             fileOperationNumber !== externalOperationNumber ||
             fileTotalCredit - externalTotalCredit >= 100 ||
@@ -588,18 +598,18 @@ function PlanDePago() {
           }}
         >
           Crear Update Queries
-        </button>
+        </Button>
       </p>
       <p>Update queries: </p>
       <Query content={query2}></Query>
       <Query content={query3}></Query>
-      <button
+      <Button
         style={{ position: 'fixed', right: '2rem', bottom: '2rem' }}
         onClick={() => restartValues()}
       >
-        Restart
-      </button>
-    </>
+        Reiniciar
+      </Button>
+    </div>
   )
 }
 
