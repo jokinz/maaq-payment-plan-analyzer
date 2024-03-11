@@ -9,26 +9,24 @@ import TraspasoDeBienesYBaja from './components/TraspasoDeBienesYBaja'
 
 function App() {
   return (
-    <>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <Tabs defaultValue="paymentPlan">
-          <TabsList>
-            <TabsTrigger value="paymentPlan">
-              Aplicación de plan de pago
-            </TabsTrigger>
-            <TabsTrigger value="goodsTransfer">
-              Traspaso de bienes y baja
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="paymentPlan">
-            <PlanDePago />
-          </TabsContent>
-          <TabsContent value="goodsTransfer">
-            <TraspasoDeBienesYBaja />
-          </TabsContent>
-        </Tabs>
-      </ThemeProvider>
-    </>
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <Tabs defaultValue="paymentPlan">
+        <TabsList>
+          <TabsTrigger value="paymentPlan">
+            Aplicación de plan de pago
+          </TabsTrigger>
+          <TabsTrigger value="goodsTransfer">
+            Traspaso de bienes y baja
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="paymentPlan">
+          <PlanDePago />
+        </TabsContent>
+        <TabsContent value="goodsTransfer">
+          <TraspasoDeBienesYBaja />
+        </TabsContent>
+      </Tabs>
+    </ThemeProvider>
   )
 }
 
