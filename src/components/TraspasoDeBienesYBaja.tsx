@@ -106,6 +106,7 @@ function TraspasoDeBienesYBaja() {
             <p>Excepciones: </p>
             {exceptionsList.map((item, index) => (
               <Button
+              key={index}
                 variant={'destructive'}
                 onClick={(event) => {
                   event.preventDefault()
