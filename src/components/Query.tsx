@@ -1,16 +1,17 @@
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 
 function Query(props: { content: string; disabled?: boolean }) {
   return (
-    <p style={{ textAlign: 'right' }}>
+    <div className="grid grid-cols-12 col-span-2 gap-4">
       <Textarea
+        style={{ gridColumn: 'span 12 / span 12' }}
         disabled
         value={props.content}
-        className="textarea-query"
+        className="textarea-query min-h-[150]"
       ></Textarea>
       <Button
+        style={{ gridColumn: '12 / span 1' }}
         disabled={props.content === ''}
         onClick={(event) => {
           event.preventDefault()
@@ -19,7 +20,7 @@ function Query(props: { content: string; disabled?: boolean }) {
       >
         Copiar
       </Button>
-    </p>
+    </div>
   )
 }
 
