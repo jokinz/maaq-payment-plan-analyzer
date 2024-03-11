@@ -376,6 +376,7 @@ function PlanDePago() {
       }
     }
   }
+
   const fileRef = useRef<HTMLInputElement>(null)
 
   const restartValues = () => {
@@ -393,10 +394,11 @@ function PlanDePago() {
       fileRef.current.value = ''
     }
   }
+
   return (
-    <div className="flex flex-col gap-3">
-      <h2>Aplicación de plan de pago</h2>
-      <section className="grid grid-cols-2">
+    <div className="flex flex-col gap-4 ">
+      <h2 className="font-bold">Aplicación de plan de pago</h2>
+      <section className="grid grid-cols-2 gap-8 items-center">
         <div>
           <p>País: </p>
           <RadioGroup defaultValue="colombia">
@@ -415,164 +417,210 @@ function PlanDePago() {
                 id="chile"
                 checked={country === 'chile'}
                 onChange={() => setCountry('chile')}
+                disabled
               />
               <Label htmlFor="chile">Chile</Label>
             </div>
           </RadioGroup>
         </div>
-        <div>
-          <p>
-            <Label htmlFor="operationNumber">Número de Operación: </Label>
-            <Input
-              id="operationNumber"
-              type="text"
-              value={externalOperationNumber ? externalOperationNumber : ''}
-              onChange={(event) =>
-                parseInt(event.target.value) &&
-                setExternalOperationNumber(parseInt(event.target.value))
-              }
-            />
-          </p>
+        <div className="grid grid-cols-2 gap-4 items-center text-left">
+          <Label htmlFor="cellOperationNumber">
+            Celda número de operación:
+          </Label>
+          <Input
+            id="cellOperationNumber"
+            type="text"
+            value={cellOperationNumber}
+            disabled
+          />
+          <Label htmlFor="cellTotalCredit">Celda crédito total: </Label>
+          <Input
+            id="cellTotalCredit"
+            type="text"
+            value={cellTotalCredit}
+            disabled
+          />
         </div>
-      </section>
+        <div className="grid grid-cols-2 gap-4 items-center text-left">
+          <Label htmlFor="operationNumber">Número de Operación: </Label>
+          <Input
+            id="operationNumber"
+            type="text"
+            value={externalOperationNumber ? externalOperationNumber : ''}
+            onChange={(event) =>
+              parseInt(event.target.value) &&
+              setExternalOperationNumber(parseInt(event.target.value))
+            }
+          />
+        </div>
+        <Query content={query1} />
+        <div className="grid grid-cols-2 gap-4 text-left items-center">
+          <h3 className="font-bold col-span-2 text-center">Datos de entrada</h3>
+          <Label htmlFor="operationNumberCopy">Número de Operación: </Label>
+          <Input
+            id="operationNumberCopy"
+            type="text"
+            value={externalOperationNumber ? externalOperationNumber : ''}
+            readOnly
+          />
+          <Label htmlFor="externalPaymentsQuantity">Cantidad de cuotas: </Label>
+          <Input
+            id="externalPaymentsQuantity"
+            type="text"
+            value={
+              externalPaymentsQuantity !== 0 ? externalPaymentsQuantity : ''
+            }
+            onChange={(event) =>
+              parseInt(event.target.value) &&
+              setExternalPaymentsQuantity(parseInt(event.target.value))
+            }
+          />
+          <Label htmlFor="totalCredit">Crédito Total: </Label>
+          <Input
+            id="totalCredit"
+            type="text"
+            value={externalTotalCredit !== 0 ? externalTotalCredit : ''}
+            onChange={(event) =>
+              parseInt(event.target.value) &&
+              setExternalTotalCredit(parseInt(event.target.value))
+            }
+          />
 
-      <Query content={query1}></Query>
-      <p>
-        <Label htmlFor="totalCredit">Crédito Total: </Label>
-        <Input
-          id="totalCredit"
-          type="text"
-          value={externalTotalCredit !== 0 ? externalTotalCredit : ''}
-          onChange={(event) =>
-            parseInt(event.target.value) &&
-            setExternalTotalCredit(parseInt(event.target.value))
-          }
-        />
-      </p>
-      <p>
-        <Label htmlFor="externalPaymentsQuantity">Cantidad de pagos: </Label>
-        <Input
-          id="externalPaymentsQuantity"
-          type="text"
-          value={externalPaymentsQuantity !== 0 ? externalPaymentsQuantity : ''}
-          onChange={(event) =>
-            parseInt(event.target.value) &&
-            setExternalPaymentsQuantity(parseInt(event.target.value))
-          }
-        />
-      </p>
-      <Input
-        ref={fileRef}
-        type="file"
-        onChange={(event) => setFile(event.currentTarget.files)}
-      />
-      <Button
-        disabled={
-          externalOperationNumber === 0 ||
-          externalPaymentsQuantity === 0 ||
-          externalTotalCredit === 0 ||
-          file === null
-        }
-        onClick={(event) => {
-          event.preventDefault()
-          validate()
-        }}
-      >
-        Validar
-      </Button>
-      <h3>Datos del archivo</h3>
-      {file && (
-        <>
-          <p
+          <Label htmlFor="externalFile">Archivo: </Label>
+          <Input
+            id="externalFile"
+            ref={fileRef}
+            type="file"
+            onChange={(event) => setFile(event.currentTarget.files)}
+          />
+          <Button
+            className="col-span-2"
+            disabled={
+              externalOperationNumber === 0 ||
+              externalPaymentsQuantity === 0 ||
+              externalTotalCredit === 0 ||
+              file === null
+            }
+            onClick={(event) => {
+              event.preventDefault()
+              validate()
+            }}
+          >
+            Validar
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 gap-4 text-left items-center">
+          <h3 className="font-bold col-span-2 text-center">
+            Datos del archivo
+          </h3>
+          <Label htmlFor="fileOperationNumber">
+            Número de Operación <b>(Archivo)</b>:{' '}
+          </Label>
+          <Input
+            id="fileOperationNumber"
+            type="text"
+            readOnly
+            value={fileOperationNumber ? fileOperationNumber : ''}
             style={
               fileOperationNumber === externalOperationNumber
                 ? { color: 'green' }
                 : { color: 'red' }
             }
-          >
-            Número de Operación: <b>{fileOperationNumber}</b>
-          </p>
-          <p
-            style={{
-              color:
-                fileTotalCredit - externalTotalCredit === 0
-                  ? 'green'
-                  : fileTotalCredit - externalTotalCredit <= 100 &&
-                    fileTotalCredit - externalTotalCredit >= -100
-                  ? 'yellow'
-                  : 'red',
-            }}
-          >
-            Crédito Total: <b>{fileTotalCredit}</b>
-          </p>
-          <p
-            style={{
-              color:
-                fileTotalCredit - externalTotalCredit === 0
-                  ? 'green'
-                  : fileTotalCredit - externalTotalCredit <= 100 &&
-                    fileTotalCredit - externalTotalCredit >= -100
-                  ? 'yellow'
-                  : 'red',
-            }}
-          >
-            Diferencia de crédito:
-            <b>{fileTotalCredit - externalTotalCredit}</b>
-          </p>
-          <p
+          />
+          <Label htmlFor="filePaymentsQuantity">
+            Cantidad de cuotas <b>(Archivo)</b>:{' '}
+          </Label>
+          <Input
+            id="filePaymentsQuantity"
+            type="text"
+            readOnly
+            value={filePaymentsQuantity ? filePaymentsQuantity : ''}
             style={
               filePaymentsQuantity === externalPaymentsQuantity
                 ? { color: 'green' }
                 : { color: 'red' }
             }
-          >
-            Cantidad de cuotas: <b>{filePaymentsQuantity}</b>
-          </p>
-        </>
-      )}
-      <p>
-        <Button
-          disabled={
-            !file ||
-            fileOperationNumber !== externalOperationNumber ||
-            fileTotalCredit - externalTotalCredit >= 100 ||
-            fileTotalCredit - externalTotalCredit <= -100 ||
-            filePaymentsQuantity !== externalPaymentsQuantity
-          }
-          onClick={(event) => {
-            event.preventDefault()
-            try {
-              file && validateData(file[0], sheetName, paymentNumberColumn)
-            } catch (error) {
-              console.error(error)
+          />
+          <Label htmlFor="fileTotalCredit">
+            Crédito Total <b>(Archivo)</b>:{' '}
+          </Label>
+          <Input
+            id="fileTotalCredit"
+            type="text"
+            readOnly
+            value={fileTotalCredit ? fileTotalCredit : ''}
+            style={{
+              color:
+                fileTotalCredit - externalTotalCredit === 0
+                  ? 'green'
+                  : fileTotalCredit - externalTotalCredit <= 100 &&
+                    fileTotalCredit - externalTotalCredit >= -100
+                  ? 'yellow'
+                  : 'red',
+            }}
+          />
+          <Label htmlFor="totalCreditDifference">Diferencia de crédito: </Label>
+          <Input
+            id="totalCreditDifference"
+            type="text"
+            readOnly
+            value={fileTotalCredit ? fileTotalCredit - externalTotalCredit : ''}
+            style={{
+              color:
+                fileTotalCredit - externalTotalCredit === 0
+                  ? 'green'
+                  : fileTotalCredit - externalTotalCredit <= 100 &&
+                    fileTotalCredit - externalTotalCredit >= -100
+                  ? 'yellow'
+                  : 'red',
+            }}
+          />
+
+          <Button
+            className="col-span-2"
+            disabled={
+              !file ||
+              fileOperationNumber !== externalOperationNumber ||
+              fileTotalCredit - externalTotalCredit >= 100 ||
+              fileTotalCredit - externalTotalCredit <= -100 ||
+              filePaymentsQuantity !== externalPaymentsQuantity
             }
-          }}
-        >
-          Validar datos
-        </Button>
-      </p>
-      <RadioGroup defaultValue="peso">
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem
-            value="peso"
-            id="peso"
-            checked={currency === 'peso'}
-            onChange={() => setCurrency('peso')}
-          />
-          <Label htmlFor="peso">Peso</Label>
+            onClick={(event) => {
+              event.preventDefault()
+              try {
+                file && validateData(file[0], sheetName, paymentNumberColumn)
+              } catch (error) {
+                console.error(error)
+              }
+            }}
+          >
+            Validar datos
+          </Button>
         </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem
-            value="usd"
-            id="usd"
-            checked={currency === 'usd'}
-            onChange={() => setCurrency('usd')}
-            disabled
-          />
-          <Label htmlFor="usd">USD</Label>
+        <div>
+          <p>Moneda: </p>
+          <RadioGroup defaultValue="peso">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem
+                value="peso"
+                id="peso"
+                checked={currency === 'peso'}
+                onChange={() => setCurrency('peso')}
+              />
+              <Label htmlFor="peso">Peso</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem
+                value="usd"
+                id="usd"
+                checked={currency === 'usd'}
+                onChange={() => setCurrency('usd')}
+                disabled
+              />
+              <Label htmlFor="usd">USD</Label>
+            </div>
+          </RadioGroup>
         </div>
-      </RadioGroup>
-      <p>
         <Button
           disabled={
             fileOperationNumber !== externalOperationNumber ||
@@ -599,12 +647,12 @@ function PlanDePago() {
         >
           Crear Update Queries
         </Button>
-      </p>
-      <p>Update queries: </p>
-      <Query content={query2}></Query>
-      <Query content={query3}></Query>
+        <h3 className="col-span-2 font-bold">Update queries: </h3>
+        <Query content={query2}></Query>
+        <Query content={query3}></Query>
+      </section>
       <Button
-        style={{ position: 'fixed', right: '2rem', bottom: '2rem' }}
+        className="fixed right-4 bottom-4"
         onClick={() => restartValues()}
       >
         Reiniciar
