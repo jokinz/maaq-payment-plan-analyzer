@@ -14,6 +14,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons'
+
 type Countries = 'colombia' | 'chile'
 type Currencies = 'peso' | 'usd'
 
@@ -364,7 +367,7 @@ function PlanDePago() {
           sheetName,
           cellTotalCredit
         )
-        setFileTotalCredit(readTotalCredit)
+        setFileTotalCredit(readTotalCredit | 0)
         const readPaymentsQuantity = await getLastCellValue(
           file[0],
           sheetName,
@@ -491,6 +494,7 @@ function PlanDePago() {
             id="externalFile"
             ref={fileRef}
             type="file"
+            accept=".xls, .xlsm, .xlsx"
             onChange={(event) => setFile(event.currentTarget.files)}
           />
           <Button
@@ -655,7 +659,7 @@ function PlanDePago() {
         className="fixed right-4 bottom-4"
         onClick={() => restartValues()}
       >
-        Reiniciar
+        Reiniciar <FontAwesomeIcon className="ml-2" icon={faArrowRotateLeft} />
       </Button>
     </div>
   )

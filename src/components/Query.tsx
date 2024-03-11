@@ -1,6 +1,9 @@
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCopy } from '@fortawesome/free-solid-svg-icons'
+
 function Query(props: { content: string; disabled?: boolean }) {
   return (
     <div className="grid grid-cols-12 col-span-2 gap-4">
@@ -18,7 +21,7 @@ function Query(props: { content: string; disabled?: boolean }) {
           navigator.clipboard.writeText(props.content)
         }}
       >
-        Copiar
+        Copiar <FontAwesomeIcon className='ml-2' icon={faCopy} />
       </Button>
     </div>
   )
