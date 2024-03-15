@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import PlanDePago from './components/PlanDePago'
 import TraspasoDeBienesYBaja from './components/TraspasoDeBienesYBaja'
+import NumerosDos from './components/NumerosDos'
 
 function App() {
   return (
@@ -18,12 +19,16 @@ function App() {
           <TabsTrigger value="goodsTransfer">
             Traspaso de bienes y baja
           </TabsTrigger>
+          <TabsTrigger value="numberTwos">Números Dos</TabsTrigger>
         </TabsList>
         <TabsContent value="paymentPlan">
           <PlanDePago />
         </TabsContent>
         <TabsContent value="goodsTransfer">
           <TraspasoDeBienesYBaja />
+        </TabsContent>
+        <TabsContent value="numberTwos">
+          <NumerosDos />
         </TabsContent>
       </Tabs>
     </ThemeProvider>
