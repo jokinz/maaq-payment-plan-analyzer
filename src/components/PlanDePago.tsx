@@ -42,6 +42,7 @@ function PlanDePago() {
 
   const [fileOperationNumber, setFileOperationNumber] = useState<number>(0)
   const [fileTotalCredit, setFileTotalCredit] = useState<number>(0)
+  console.log('fileTotalCredit', fileTotalCredit, typeof fileTotalCredit)
   const [filePaymentsQuantity, setFilePaymentsQuantity] = useState<number>(0)
 
   const query1: string = externalOperationNumber
@@ -367,7 +368,7 @@ function PlanDePago() {
           sheetName,
           cellTotalCredit
         )
-        setFileTotalCredit(readTotalCredit | 0)
+        setFileTotalCredit(Math.trunc(readTotalCredit))
         const readPaymentsQuantity = await getLastCellValue(
           file[0],
           sheetName,
@@ -559,7 +560,7 @@ function PlanDePago() {
                   ? 'green'
                   : fileTotalCredit - externalTotalCredit <= 100 &&
                     fileTotalCredit - externalTotalCredit >= -100
-                  ? 'yellow'
+                  ? 'orange'
                   : 'red',
             }}
           />
@@ -575,7 +576,7 @@ function PlanDePago() {
                   ? 'green'
                   : fileTotalCredit - externalTotalCredit <= 100 &&
                     fileTotalCredit - externalTotalCredit >= -100
-                  ? 'yellow'
+                  ? 'orange'
                   : 'red',
             }}
           />
