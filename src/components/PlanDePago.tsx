@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import '../App.css'
 
@@ -13,6 +13,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons'
@@ -24,7 +31,6 @@ function PlanDePago() {
   const [country, setCountry] = useState<Countries>('colombia')
   const [currency, setCurrency] = useState<Currencies>('peso')
 
-  const sheetName: string = 'WEBPCF'
   const cellOperationNumber: string = country === 'colombia' ? 'C4' : 'C1'
   const cellTotalCredit: string = country === 'colombia' ? 'H8' : 'H5'
   const paymentNumberColumn = 'B'
@@ -40,9 +46,11 @@ function PlanDePago() {
 
   const [file, setFile] = useState<FileList | null>(null)
 
+  const [targetSheet, setTargetSheet] = useState('WEBPCF')
+  const [sheetsList, setSheetsList] = useState([''])
+
   const [fileOperationNumber, setFileOperationNumber] = useState<number>(0)
   const [fileTotalCredit, setFileTotalCredit] = useState<number>(0)
-  console.log('fileTotalCredit', fileTotalCredit, typeof fileTotalCredit)
   const [filePaymentsQuantity, setFilePaymentsQuantity] = useState<number>(0)
 
   const query1: string = externalOperationNumber
@@ -52,6 +60,38 @@ function PlanDePago() {
   const query3: string = externalOperationNumber
     ? updateQuery(externalOperationNumber)
     : ''
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (file) {
+      ;(async () => {
+        const sheetNames = await getAllSheetNames(file[0])
+        setSheetsList(sheetNames)
+      })()
+    }
+  }, [file])
+
+  function getAllSheetNames(file: File): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+
+      reader.onload = (event) => {
+        try {
+          const data = event.target?.result
+          const workbook = XLSX.read(data, { type: 'array' })
+          resolve(workbook.SheetNames)
+        } catch (error) {
+          reject(error)
+        }
+      }
+
+      reader.onerror = (error) => {
+        reject(error)
+      }
+
+      reader.readAsArrayBuffer(file)
+    })
+  }
 
   function readCellValue(
     file: File,
@@ -359,19 +399,19 @@ function PlanDePago() {
       try {
         const readOperationNumber = await readCellValue(
           file[0],
-          sheetName,
+          targetSheet,
           cellOperationNumber
         )
         setFileOperationNumber(readOperationNumber)
         const readTotalCredit = await readCellValue(
           file[0],
-          sheetName,
+          targetSheet,
           cellTotalCredit
         )
         setFileTotalCredit(Math.trunc(readTotalCredit))
         const readPaymentsQuantity = await getLastCellValue(
           file[0],
-          sheetName,
+          targetSheet,
           paymentNumberColumn
         )
         setFilePaymentsQuantity(readPaymentsQuantity)
@@ -380,8 +420,6 @@ function PlanDePago() {
       }
     }
   }
-
-  const fileRef = useRef<HTMLInputElement>(null)
 
   const restartValues = () => {
     setCountry('colombia')
@@ -489,15 +527,37 @@ function PlanDePago() {
               setExternalTotalCredit(parseInt(event.target.value))
             }
           />
+          <div className='grid grid-cols-4 col-span-2 items-center gap-4'>
+            <Label htmlFor="externalFile">Archivo: </Label>
+            <Input
+              id="externalFile"
+              ref={fileRef}
+              type="file"
+              accept=".xls, .xlsm, .xlsx"
+              onChange={(event) => setFile(event.currentTarget.files)}
+            />
+            <Label htmlFor="selectedSheet">Hoja:</Label>
+            <Select
+              value={targetSheet}
+              onValueChange={(sheet) => setTargetSheet(sheet)}
+              name="selectedSheet"
+              disabled={file === null}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar hoja" />
+              </SelectTrigger>
+              <SelectContent>
+                {sheetsList.map((sheetName, index) => {
+                  return (
+                    <SelectItem key={index} value={sheetName.toString()}>
+                      {sheetName.toString()}
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Label htmlFor="externalFile">Archivo: </Label>
-          <Input
-            id="externalFile"
-            ref={fileRef}
-            type="file"
-            accept=".xls, .xlsm, .xlsx"
-            onChange={(event) => setFile(event.currentTarget.files)}
-          />
           <Button
             className="col-span-2"
             disabled={
@@ -518,6 +578,7 @@ function PlanDePago() {
           <h3 className="font-bold col-span-2 text-center">
             Datos del archivo
           </h3>
+
           <Label htmlFor="fileOperationNumber">
             Número de Operación <b>(Archivo)</b>:{' '}
           </Label>
@@ -593,7 +654,7 @@ function PlanDePago() {
             onClick={(event) => {
               event.preventDefault()
               try {
-                file && validateData(file[0], sheetName, paymentNumberColumn)
+                file && validateData(file[0], targetSheet, paymentNumberColumn)
               } catch (error) {
                 console.error(error)
               }
@@ -640,7 +701,7 @@ function PlanDePago() {
               if (file) {
                 const updateQueries = await createUpdateQueries(
                   file[0],
-                  sheetName,
+                  targetSheet,
                   paymentNumberColumn
                 )
                 setQuery2(updateQueries)
