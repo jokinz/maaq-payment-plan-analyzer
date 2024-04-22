@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Label } from './ui/label'
+import { Label } from '@/components/ui/label'
 
 type Status = {
   value: string
@@ -150,7 +150,7 @@ function TraspasoDeBienesYBaja() {
           <>
             <Label htmlFor="selectedStatus">Nuevo estado: </Label>
             <Select
-              value={selectedStatus.toString()}
+              value={selectedStatus}
               onValueChange={(value) => setSelectedStatus(value)}
               name="selectedStatus"
             >
@@ -160,29 +160,13 @@ function TraspasoDeBienesYBaja() {
               <SelectContent>
                 {StatusList.map((status, index) => {
                   return (
-                    <SelectItem key={index} value={status.value.toString()}>
+                    <SelectItem key={index} value={status.value}>
                       {status.text}
                     </SelectItem>
                   )
                 })}
               </SelectContent>
             </Select>
-            {/* <select
-            defaultValue={-1}
-            value={selectedStatus}
-            onChange={(event) =>
-              setSelectedStatus(parseInt(event.target.value))
-            }
-            name="selectedStatus"
-            id="selectedStatus"
-          >
-            <option disabled value={-1}>
-              Seleccionar
-            </option>
-            {StatusList.map((status) => {
-              return <option value={status.value}>{status.text}</option>
-            })}
-          </select> */}
             {selectedStatus !== '' && (
               <Query
                 content={`UPDATE SCA_ADMINI..TCO 
