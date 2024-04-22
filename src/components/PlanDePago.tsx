@@ -46,8 +46,8 @@ function PlanDePago() {
 
   const [file, setFile] = useState<FileList | null>(null)
 
-  const [targetSheet, setTargetSheet] = useState('WEBPCF')
-  const [sheetsList, setSheetsList] = useState([''])
+  const [targetSheet, setTargetSheet] = useState<string>('WEBPCF')
+  const [sheetsList, setSheetsList] = useState<string[]>([])
 
   const [fileOperationNumber, setFileOperationNumber] = useState<number>(0)
   const [fileTotalCredit, setFileTotalCredit] = useState<number>(0)
@@ -549,8 +549,8 @@ function PlanDePago() {
               <SelectContent>
                 {sheetsList.map((sheetName, index) => {
                   return (
-                    <SelectItem key={index} value={sheetName.toString()}>
-                      {sheetName.toString()}
+                    <SelectItem key={index} value={sheetName}>
+                      {sheetName}
                     </SelectItem>
                   )
                 })}
