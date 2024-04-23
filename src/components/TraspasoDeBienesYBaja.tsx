@@ -5,7 +5,7 @@ import '../App.css'
 import Query from './Query'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -13,7 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
+
+import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+
+import FormField from '@/components/FormField'
 
 type Status = {
   value: string
@@ -36,31 +40,40 @@ const StatusList: Status[] = [
 ]
 
 function TraspasoDeBienesYBaja() {
-  const [sourceOperation, setSourceOperation] = useState(0)
-  const [targetOperation, setTargetOperation] = useState(0)
-  const [selectedStatus, setSelectedStatus] = useState('')
-  const [exception, setException] = useState('')
+  const [sourceOperation, setSourceOperation] = useState<number>(0)
+  const [targetOperation, setTargetOperation] = useState<number>(0)
+  const [selectedStatus, setSelectedStatus] = useState<string>('')
+  const [exception, setException] = useState<string>('')
   const [exceptionsList, setExceptionsList] = useState<string[]>([])
 
+  const restartValues = () => {
+    setSourceOperation(0)
+    setTargetOperation(0)
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    })
+  }
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 mt-8 mb-8">
       <h2 className="font-bold">Traspaso de bienes y baja</h2>
       <section className="grid grid-cols-2 gap-8 items-center">
         <div className="grid grid-cols-2 gap-4 items-center text-left">
-          <Label htmlFor="targetOperation">Operación Objetivo: </Label>
-          <Input
-            id="targetOperation"
-            value={targetOperation}
+          <FormField
+            htmlFor="targetOperation"
+            label="Operación Objetivo"
+            value={targetOperation ? targetOperation : ''}
             onChange={(event) => {
               setTargetOperation(parseInt(event.target.value))
             }}
           />
         </div>
         <div className="grid grid-cols-2 gap-4 items-center text-left">
-          <Label htmlFor="sourceOperation">Operation Fuente: </Label>
-          <Input
-            id="sourceOperation"
-            value={sourceOperation}
+          <FormField
+            htmlFor="sourceOperation"
+            label="Operation Fuente"
+            value={sourceOperation ? sourceOperation : ''}
             onChange={(event) => {
               event.preventDefault()
               setSourceOperation(parseInt(event.target.value))
@@ -82,9 +95,9 @@ function TraspasoDeBienesYBaja() {
           }
         ></Query>
         <div className="grid grid-cols-2 gap-4 items-center text-left">
-          <Label htmlFor="exception">Excepción: </Label>
-          <Input
-            id="exception"
+          <FormField
+            htmlFor="exception"
+            label="Excepción"
             value={exception}
             onChange={(event) => {
               setException(event.target.value)
@@ -106,7 +119,7 @@ function TraspasoDeBienesYBaja() {
             <p>Excepciones: </p>
             {exceptionsList.map((item, index) => (
               <Button
-              key={index}
+                key={index}
                 variant={'destructive'}
                 onClick={(event) => {
                   event.preventDefault()
@@ -177,6 +190,12 @@ function TraspasoDeBienesYBaja() {
           </>
         )}
       </section>
+      <Button
+        className="fixed right-4 bottom-4"
+        onClick={() => restartValues()}
+      >
+        Reiniciar <FontAwesomeIcon className="ml-2" icon={faArrowRotateLeft} />
+      </Button>
     </div>
   )
 }
