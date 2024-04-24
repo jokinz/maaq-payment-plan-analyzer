@@ -24,6 +24,8 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons'
 
+import FormField from '@/components/FormField'
+
 type Countries = 'colombia' | 'chile'
 type Currencies = 'peso' | 'usd'
 
@@ -71,6 +73,30 @@ function PlanDePago() {
     }
   }, [file])
 
+  function readFile(file: File): Promise<XLSX.WorkBook> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        try {
+          const data = event.target?.result
+          if (typeof data === 'string' || data instanceof ArrayBuffer) {
+            const workbook = XLSX.read(data, { type: 'array' })
+
+            resolve(workbook)
+          } else {
+            reject(new Error('Invalid file content type'))
+          }
+        } catch (error) {
+          reject(error)
+        }
+      }
+      reader.onerror = (error) => {
+        reject(error)
+      }
+      reader.readAsArrayBuffer(file)
+    })
+  }
+
   function getAllSheetNames(file: File): Promise<any> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -93,317 +119,211 @@ function PlanDePago() {
     })
   }
 
-  function readCellValue(
+  async function getCellValue(
     file: File,
     sheetName: string,
     cellReference: string
   ): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-
-      reader.onload = (event) => {
-        try {
-          const data = event.target?.result
-          if (typeof data === 'string' || data instanceof ArrayBuffer) {
-            const workbook = XLSX.read(data, { type: 'array' })
-            const sheet = workbook.Sheets[sheetName]
-            const cellValue = sheet[cellReference]?.v
-
-            resolve(cellValue)
-          } else {
-            reject(new Error('Invalid file content type'))
-          }
-        } catch (error) {
-          reject(error)
-        }
-      }
-
-      reader.onerror = (error) => {
-        reject(error)
-      }
-      reader.readAsArrayBuffer(file)
-    })
+    try {
+      const workbook = await readFile(file)
+      const sheet = workbook.Sheets[sheetName]
+      const cellValue = sheet[cellReference]?.v
+      return cellValue
+    } catch (error) {
+      alert(error)
+    }
   }
 
-  function getLastCellValue(
+  async function getLastCellValue(
     file: File,
     sheetName: string,
     columnName: string
   ): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
+    try {
+      const workbook = await readFile(file)
+      const sheet = workbook.Sheets[sheetName]
+      const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
+      const colIndex = XLSX.utils.decode_col(columnName)
 
-      reader.onload = (event) => {
-        try {
-          const data = event.target?.result
-          if (typeof data === 'string' || data instanceof ArrayBuffer) {
-            const workbook = XLSX.read(data, { type: 'array' })
+      let lastCellValue
 
-            const sheet = workbook.Sheets[sheetName]
+      for (
+        let rowIndex = columnRange.s.r;
+        rowIndex <= columnRange.e.r;
+        rowIndex++
+      ) {
+        const cellAddress = { r: rowIndex, c: colIndex }
+        const cellRef = XLSX.utils.encode_cell(cellAddress)
+        const cellValue = sheet[cellRef]?.v
 
-            const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
-            const colIndex = XLSX.utils.decode_col(columnName)
-
-            let lastCellValue
-
-            for (
-              let rowIndex = columnRange.s.r;
-              rowIndex <= columnRange.e.r;
-              rowIndex++
-            ) {
-              const cellAddress = { r: rowIndex, c: colIndex }
-              const cellRef = XLSX.utils.encode_cell(cellAddress)
-              const cellValue = sheet[cellRef]?.v
-
-              if (cellValue !== undefined && typeof cellValue === 'number') {
-                lastCellValue = cellValue
-              }
-            }
-
-            resolve(lastCellValue)
-          } else {
-            reject(new Error('Invalid file content type'))
-          }
-        } catch (error) {
-          reject(error)
+        if (cellValue !== undefined && typeof cellValue === 'number') {
+          lastCellValue = cellValue
         }
       }
-
-      reader.onerror = (error) => {
-        reject(error)
-      }
-
-      reader.readAsArrayBuffer(file)
-    })
+      return lastCellValue
+    } catch (error) {
+      alert(error)
+    }
   }
 
-  function validateData(
+  async function validateData(
     file: File,
     sheetName: string,
     columnName: string
   ): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
+    try {
+      const workbook = await readFile(file)
+      const sheet = workbook.Sheets[sheetName]
+      const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
+      const colIndex = XLSX.utils.decode_col(columnName)
 
-      reader.onload = (event) => {
-        try {
-          const data = event.target?.result
-          if (typeof data === 'string' || data instanceof ArrayBuffer) {
-            const workbook = XLSX.read(data, { type: 'array' })
+      let lastCellValue
 
-            const sheet = workbook.Sheets[sheetName]
+      for (
+        let rowIndex = columnRange.s.r;
+        rowIndex <= columnRange.e.r;
+        rowIndex++
+      ) {
+        const cellAddress = { r: rowIndex, c: colIndex }
+        const cellRef = XLSX.utils.encode_cell(cellAddress)
+        const numCuota = sheet[cellRef]?.v
 
-            const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
-            const colIndex = XLSX.utils.decode_col(columnName)
+        if (numCuota !== undefined && typeof numCuota === 'number') {
+          const siguienteNumCuota =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex })]?.v
+          const fechVenc =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 1 })]?.v
+          const siguienteFechVenc =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 1 })]
+              ?.v
+          const cuota =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 2 })]?.v
+          const amortizacion =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })]?.v
+          const siguienteAmortizacion =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 3 })]
+              ?.v
+          const intereses =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })]?.v
+          const seguros =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 5 })]?.v
+          const saldoInsoluto =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 6 })]?.v
+          const siguienteSaldoInsoluto =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 6 })]
+              ?.v
 
-            let lastCellValue
-
-            for (
-              let rowIndex = columnRange.s.r;
-              rowIndex <= columnRange.e.r;
-              rowIndex++
-            ) {
-              const cellAddress = { r: rowIndex, c: colIndex }
-              const cellRef = XLSX.utils.encode_cell(cellAddress)
-              const numCuota = sheet[cellRef]?.v
-
-              if (numCuota !== undefined && typeof numCuota === 'number') {
-                const siguienteNumCuota =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex })
-                  ]?.v
-                const fechVenc =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 1 })
-                  ]?.v
-                const siguienteFechVenc =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 1 })
-                  ]?.v
-                const cuota =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 2 })
-                  ]?.v
-                const amortizacion =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })
-                  ]?.v
-                const siguienteAmortizacion =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 3 })
-                  ]?.v
-                const intereses =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })
-                  ]?.v
-                const seguros =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 5 })
-                  ]?.v
-                const saldoInsoluto =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 6 })
-                  ]?.v
-                const siguienteSaldoInsoluto =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 6 })
-                  ]?.v
-
-                if (
-                  seguros + intereses + amortizacion - cuota !== 0 ||
-                  saldoInsoluto -
-                    siguienteAmortizacion -
-                    siguienteSaldoInsoluto !==
-                    0 ||
-                  siguienteNumCuota - numCuota !== 1 ||
-                  siguienteFechVenc - fechVenc < 28 ||
-                  siguienteFechVenc - fechVenc > 31
-                ) {
-                  alert(`Error de validación en cuota N°: ${numCuota}`)
-                }
-              }
-            }
-
-            resolve(lastCellValue)
-          } else {
-            reject(new Error('Invalid file content type'))
+          if (
+            seguros + intereses + amortizacion - cuota !== 0 ||
+            saldoInsoluto - siguienteAmortizacion - siguienteSaldoInsoluto !==
+              0 ||
+            siguienteNumCuota - numCuota !== 1 ||
+            siguienteFechVenc - fechVenc < 28 ||
+            siguienteFechVenc - fechVenc > 31
+          ) {
+            alert(`Error de validación en cuota N°: ${numCuota}`)
           }
-        } catch (error) {
-          reject(error)
         }
       }
-
-      reader.onerror = (error) => {
-        reject(error)
-      }
-
-      reader.readAsArrayBuffer(file)
-    })
+      return lastCellValue
+    } catch (error) {
+      alert(error)
+    }
   }
 
-  function createUpdateQueries(
+  async function createUpdateQueries(
     file: File,
     sheetName: string,
     columnName: string
-  ): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
+  ): Promise<any> {
+    try {
+      const workbook = await readFile(file)
+      const sheet = workbook.Sheets[sheetName]
+      const operationNumber = sheet['C4']?.v
 
-      reader.onload = (event) => {
-        try {
-          const data = event.target?.result
-          if (typeof data === 'string' || data instanceof ArrayBuffer) {
-            const workbook = XLSX.read(data, { type: 'array' })
+      const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
+      const colIndex = XLSX.utils.decode_col(columnName)
 
-            const sheet = workbook.Sheets[sheetName]
-            const operationNumber = sheet['C4']?.v
+      let concatenatedQueries = `use SCA_HIPOTEC\nGO\n`
 
-            const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
-            const colIndex = XLSX.utils.decode_col(columnName)
+      for (
+        let rowIndex = columnRange.s.r;
+        rowIndex <= columnRange.e.r;
+        rowIndex++
+      ) {
+        const cellAddress = { r: rowIndex, c: colIndex }
+        const cellRef = XLSX.utils.encode_cell(cellAddress)
+        const numCuota = sheet[cellRef]?.v
 
-            let concatenatedQueries = `use SCA_HIPOTEC\nGO\n`
+        if (numCuota !== undefined && typeof numCuota === 'number') {
+          const fechVenc =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 1 })]?.v
+          const cuota =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 2 })]?.v
+          const amortizacion =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })]?.v
+          const intereses =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })]?.v
+          const seguros =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 5 })]?.v
+          const saldoInsoluto =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 6 })]?.v
 
-            for (
-              let rowIndex = columnRange.s.r;
-              rowIndex <= columnRange.e.r;
-              rowIndex++
-            ) {
-              const cellAddress = { r: rowIndex, c: colIndex }
-              const cellRef = XLSX.utils.encode_cell(cellAddress)
-              const numCuota = sheet[cellRef]?.v
-
-              if (numCuota !== undefined && typeof numCuota === 'number') {
-                const fechVenc =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 1 })
-                  ]?.v
-                const cuota =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 2 })
-                  ]?.v
-                const amortizacion =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })
-                  ]?.v
-                const intereses =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })
-                  ]?.v
-                const seguros =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 5 })
-                  ]?.v
-                const saldoInsoluto =
-                  sheet[
-                    XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 6 })
-                  ]?.v
-
-                const rowData = {
-                  E10: amortizacion,
-                  F10: intereses,
-                  C10: fechVenc,
-                  G10: seguros,
-                  D10: cuota,
-                  H10: saldoInsoluto,
-                  F6: 0,
-                  C4: operationNumber,
-                  B10: numCuota,
-                }
-
-                function createUpdateQueryLine(rowData: any) {
-                  const fld_col_amor = Math.trunc(Math.round(rowData.E10))
-                  const fld_col_int = Math.trunc(Math.round(rowData.F10))
-                  const fld_col_fven = excelDateToFormattedDate(rowData.C10)
-                  const fld_col_segu = Math.trunc(Math.round(rowData.G10))
-                  const fld_col_cuo = Math.trunc(Math.round(rowData.D10))
-                  const fld_col_cuos = Math.trunc(
-                    Math.round(rowData.D10 - rowData.G10)
-                  )
-
-                  let fld_col_salc =
-                    rowData.D10 > 0
-                      ? Math.trunc(Math.round(rowData.D10))
-                      : rowData.H10
-
-                  const fld_col_sal = Math.trunc(Math.round(rowData.H10))
-
-                  const query = `Update col set fld_col_amor = ${fld_col_amor} , fld_col_int = ${fld_col_int} , fld_col_fven = '${fld_col_fven}' , fld_col_segu = ${fld_col_segu} , fld_col_cuo = ${fld_col_cuo} , fld_col_cuos = ${fld_col_cuos} , fld_col_salc = case when fld_col_salc > 0 then ${fld_col_salc} else fld_col_salc end , fld_col_sal = ${fld_col_sal} where fld_col_oper = ${rowData.C4} and fld_col_ncu = ${rowData.B10}`
-
-                  return query
-                }
-
-                const query = createUpdateQueryLine(rowData)
-                concatenatedQueries += query + '\n'
-              }
-            }
-
-            resolve(concatenatedQueries)
-          } else {
-            reject(new Error('Invalid file content type'))
+          const rowData = {
+            E10: amortizacion,
+            F10: intereses,
+            C10: fechVenc,
+            G10: seguros,
+            D10: cuota,
+            H10: saldoInsoluto,
+            F6: 0,
+            C4: operationNumber,
+            B10: numCuota,
           }
-        } catch (error) {
-          reject(error)
+
+          function createUpdateQueryLine(rowData: any) {
+            const fld_col_amor = Math.trunc(Math.round(rowData.E10))
+            const fld_col_int = Math.trunc(Math.round(rowData.F10))
+            const fld_col_fven = excelDateToFormattedDate(rowData.C10)
+            const fld_col_segu = Math.trunc(Math.round(rowData.G10))
+            const fld_col_cuo = Math.trunc(Math.round(rowData.D10))
+            const fld_col_cuos = Math.trunc(
+              Math.round(rowData.D10 - rowData.G10)
+            )
+
+            let fld_col_salc =
+              rowData.D10 > 0
+                ? Math.trunc(Math.round(rowData.D10))
+                : rowData.H10
+
+            const fld_col_sal = Math.trunc(Math.round(rowData.H10))
+
+            const query = `Update col set fld_col_amor = ${fld_col_amor} , fld_col_int = ${fld_col_int} , fld_col_fven = '${fld_col_fven}' , fld_col_segu = ${fld_col_segu} , fld_col_cuo = ${fld_col_cuo} , fld_col_cuos = ${fld_col_cuos} , fld_col_salc = case when fld_col_salc > 0 then ${fld_col_salc} else fld_col_salc end , fld_col_sal = ${fld_col_sal} where fld_col_oper = ${rowData.C4} and fld_col_ncu = ${rowData.B10}`
+
+            return query
+          }
+
+          const query = createUpdateQueryLine(rowData)
+          concatenatedQueries += query + '\n'
         }
       }
 
-      reader.onerror = (error) => {
-        reject(error)
-      }
-
-      reader.readAsArrayBuffer(file)
-    })
+      return concatenatedQueries
+    } catch (error) {
+      alert(error)
+    }
   }
 
   const validate = async () => {
     if (file) {
       try {
-        const readOperationNumber = await readCellValue(
+        const readOperationNumber = await getCellValue(
           file[0],
           targetSheet,
           cellOperationNumber
         )
         setFileOperationNumber(readOperationNumber)
-        const readTotalCredit = await readCellValue(
+        const readTotalCredit = await getCellValue(
           file[0],
           targetSheet,
           cellTotalCredit
@@ -435,10 +355,14 @@ function PlanDePago() {
     if (fileRef.current) {
       fileRef.current.value = ''
     }
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    })
   }
 
   return (
-    <div className="flex flex-col gap-4 ">
+    <div className="flex flex-col gap-4 mt-8 mb-8">
       <h2 className="font-bold">Aplicación de plan de pago</h2>
       <section className="grid grid-cols-2 gap-8 items-center">
         <div>
@@ -466,28 +390,23 @@ function PlanDePago() {
           </RadioGroup>
         </div>
         <div className="grid grid-cols-2 gap-4 items-center text-left">
-          <Label htmlFor="cellOperationNumber">
-            Celda número de operación:
-          </Label>
-          <Input
-            id="cellOperationNumber"
-            type="text"
+          <FormField
+            htmlFor="cellOperationNumber"
+            label="Celda número de operación"
             value={cellOperationNumber}
             disabled
           />
-          <Label htmlFor="cellTotalCredit">Celda crédito total: </Label>
-          <Input
-            id="cellTotalCredit"
-            type="text"
+          <FormField
+            htmlFor="cellTotalCredit"
+            label="Celda crédito total"
             value={cellTotalCredit}
             disabled
           />
         </div>
         <div className="grid grid-cols-2 gap-4 items-center text-left">
-          <Label htmlFor="operationNumber">Número de Operación: </Label>
-          <Input
-            id="operationNumber"
-            type="text"
+          <FormField
+            htmlFor="operationNumber"
+            label="Número de Operación"
             value={externalOperationNumber ? externalOperationNumber : ''}
             onChange={(event) =>
               parseInt(event.target.value) &&
@@ -498,17 +417,15 @@ function PlanDePago() {
         <Query content={query1} />
         <div className="grid grid-cols-2 gap-4 text-left items-center">
           <h3 className="font-bold col-span-2 text-center">Datos de entrada</h3>
-          <Label htmlFor="operationNumberCopy">Número de Operación: </Label>
-          <Input
-            id="operationNumberCopy"
-            type="text"
+          <FormField
+            htmlFor="operationNumberCopy"
+            label="Número de Operación"
             value={externalOperationNumber ? externalOperationNumber : ''}
             readOnly
           />
-          <Label htmlFor="externalPaymentsQuantity">Cantidad de cuotas: </Label>
-          <Input
-            id="externalPaymentsQuantity"
-            type="text"
+          <FormField
+            htmlFor="externalPaymentsQuantity"
+            label="Cantidad de cuotas"
             value={
               externalPaymentsQuantity !== 0 ? externalPaymentsQuantity : ''
             }
@@ -517,17 +434,16 @@ function PlanDePago() {
               setExternalPaymentsQuantity(parseInt(event.target.value))
             }
           />
-          <Label htmlFor="totalCredit">Crédito Total: </Label>
-          <Input
-            id="totalCredit"
-            type="text"
+          <FormField
+            htmlFor="totalCredit"
+            label="Crédito Total"
             value={externalTotalCredit !== 0 ? externalTotalCredit : ''}
             onChange={(event) =>
               parseInt(event.target.value) &&
               setExternalTotalCredit(parseInt(event.target.value))
             }
           />
-          <div className='grid grid-cols-4 col-span-2 items-center gap-4'>
+          <div className="grid grid-cols-4 col-span-2 items-center gap-4">
             <Label htmlFor="externalFile">Archivo: </Label>
             <Input
               id="externalFile"
@@ -578,43 +494,36 @@ function PlanDePago() {
           <h3 className="font-bold col-span-2 text-center">
             Datos del archivo
           </h3>
-
-          <Label htmlFor="fileOperationNumber">
-            Número de Operación <b>(Archivo)</b>:{' '}
-          </Label>
-          <Input
-            id="fileOperationNumber"
-            type="text"
-            readOnly
+          <FormField
+            htmlFor="fileOperationNumber"
+            label="Número de Operación"
+            labelBoldNote="(Archivo)"
             value={fileOperationNumber ? fileOperationNumber : ''}
+            readOnly
             style={
               fileOperationNumber === externalOperationNumber
                 ? { color: 'green' }
                 : { color: 'red' }
             }
           />
-          <Label htmlFor="filePaymentsQuantity">
-            Cantidad de cuotas <b>(Archivo)</b>:{' '}
-          </Label>
-          <Input
-            id="filePaymentsQuantity"
-            type="text"
-            readOnly
+          <FormField
+            htmlFor="filePaymentsQuantity"
+            label="Cantidad de cuotas"
             value={filePaymentsQuantity ? filePaymentsQuantity : ''}
+            labelBoldNote="(Archivo)"
+            readOnly
             style={
               filePaymentsQuantity === externalPaymentsQuantity
                 ? { color: 'green' }
                 : { color: 'red' }
             }
           />
-          <Label htmlFor="fileTotalCredit">
-            Crédito Total <b>(Archivo)</b>:{' '}
-          </Label>
-          <Input
-            id="fileTotalCredit"
-            type="text"
-            readOnly
+          <FormField
+            htmlFor="fileTotalCredit"
+            label="Crédito Total"
             value={fileTotalCredit ? fileTotalCredit : ''}
+            labelBoldNote="(Archivo)"
+            readOnly
             style={{
               color:
                 fileTotalCredit - externalTotalCredit === 0
@@ -625,12 +534,11 @@ function PlanDePago() {
                   : 'red',
             }}
           />
-          <Label htmlFor="totalCreditDifference">Diferencia de crédito: </Label>
-          <Input
-            id="totalCreditDifference"
-            type="text"
-            readOnly
+          <FormField
+            htmlFor="totalCreditDifference"
+            label="Diferencia de crédito"
             value={fileTotalCredit ? fileTotalCredit - externalTotalCredit : ''}
+            readOnly
             style={{
               color:
                 fileTotalCredit - externalTotalCredit === 0
