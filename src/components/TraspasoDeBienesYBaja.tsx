@@ -18,6 +18,7 @@ import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import FormField from '@/components/FormField'
+import Wrapper from '@/components/Wrapper'
 
 type Status = {
   value: string
@@ -56,7 +57,7 @@ function TraspasoDeBienesYBaja() {
   }
 
   return (
-    <div className="flex flex-col gap-4 mt-8 mb-8">
+    <Wrapper>
       <h2 className="font-bold">Traspaso de bienes y baja</h2>
       <section className="grid grid-cols-2 gap-8 items-center">
         <div className="grid grid-cols-2 gap-4 items-center text-left">
@@ -196,7 +197,7 @@ function TraspasoDeBienesYBaja() {
       >
         Reiniciar <FontAwesomeIcon className="ml-2" icon={faArrowRotateLeft} />
       </Button>
-    </div>
+    </Wrapper>
   )
 }
 
