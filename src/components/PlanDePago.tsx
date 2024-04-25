@@ -4,10 +4,16 @@ import '../App.css'
 
 import * as XLSX from 'xlsx'
 
-import { excelDateToFormattedDate } from '../Utils'
+import {
+  excelDateToFormattedDate,
+  getAllSheetNames,
+  getCellValue,
+  readFile,
+} from '../Utils'
 import { getDataQuery, updateQuery } from '../Queries'
 
-import Query from './Query'
+import FormField from '@/components/FormField'
+import Query from '@/components/Query'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,8 +29,6 @@ import {
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons'
-
-import FormField from '@/components/FormField'
 
 type Countries = 'colombia' | 'chile'
 type Currencies = 'peso' | 'usd'
@@ -73,72 +77,11 @@ function PlanDePago() {
     }
   }, [file])
 
-  function readFile(file: File): Promise<XLSX.WorkBook> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        try {
-          const data = event.target?.result
-          if (typeof data === 'string' || data instanceof ArrayBuffer) {
-            const workbook = XLSX.read(data, { type: 'array' })
-
-            resolve(workbook)
-          } else {
-            reject(new Error('Invalid file content type'))
-          }
-        } catch (error) {
-          reject(error)
-        }
-      }
-      reader.onerror = (error) => {
-        reject(error)
-      }
-      reader.readAsArrayBuffer(file)
-    })
-  }
-
-  function getAllSheetNames(file: File): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-
-      reader.onload = (event) => {
-        try {
-          const data = event.target?.result
-          const workbook = XLSX.read(data, { type: 'array' })
-          resolve(workbook.SheetNames)
-        } catch (error) {
-          reject(error)
-        }
-      }
-
-      reader.onerror = (error) => {
-        reject(error)
-      }
-
-      reader.readAsArrayBuffer(file)
-    })
-  }
-
-  async function getCellValue(
-    file: File,
-    sheetName: string,
-    cellReference: string
-  ): Promise<any> {
-    try {
-      const workbook = await readFile(file)
-      const sheet = workbook.Sheets[sheetName]
-      const cellValue = sheet[cellReference]?.v
-      return cellValue
-    } catch (error) {
-      alert(error)
-    }
-  }
-
-  async function getLastCellValue(
+  const getLastCellValue = async (
     file: File,
     sheetName: string,
     columnName: string
-  ): Promise<any> {
+  ): Promise<any> => {
     try {
       const workbook = await readFile(file)
       const sheet = workbook.Sheets[sheetName]
@@ -166,11 +109,11 @@ function PlanDePago() {
     }
   }
 
-  async function validateData(
+  const validateData = async (
     file: File,
     sheetName: string,
     columnName: string
-  ): Promise<any> {
+  ): Promise<any> => {
     try {
       const workbook = await readFile(file)
       const sheet = workbook.Sheets[sheetName]
@@ -231,11 +174,11 @@ function PlanDePago() {
     }
   }
 
-  async function createUpdateQueries(
+  const createUpdateQueries = async (
     file: File,
     sheetName: string,
     columnName: string
-  ): Promise<any> {
+  ): Promise<any> => {
     try {
       const workbook = await readFile(file)
       const sheet = workbook.Sheets[sheetName]
