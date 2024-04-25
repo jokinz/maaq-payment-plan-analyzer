@@ -29,6 +29,7 @@ import {
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons'
+import Wrapper from './Wrapper'
 
 type Countries = 'colombia' | 'chile'
 type Currencies = 'peso' | 'usd'
@@ -305,7 +306,7 @@ function PlanDePago() {
   }
 
   return (
-    <div className="flex flex-col gap-4 mt-8 mb-8">
+    <Wrapper>
       <h2 className="font-bold">Aplicación de plan de pago</h2>
       <section className="grid grid-cols-2 gap-8 items-center">
         <div>
@@ -574,7 +575,7 @@ function PlanDePago() {
       >
         Reiniciar <FontAwesomeIcon className="ml-2" icon={faArrowRotateLeft} />
       </Button>
-    </div>
+    </Wrapper>
   )
 }
 
