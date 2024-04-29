@@ -74,3 +74,18 @@ export const getCellValue = async (
     alert(error)
   }
 }
+
+export const getCellFunction = async (
+  file: File,
+  sheetName: string,
+  cellReference: string
+): Promise<any> => {
+  try {
+    const workbook = await readFile(file)
+    const sheet = workbook.Sheets[sheetName]
+    const cellValue = sheet[cellReference]?.f
+    return cellValue
+  } catch (error) {
+    alert(error)
+  }
+}
