@@ -1,5 +1,8 @@
-import { containsString, getCellFunction, getCellValue } from '@/Utils'
+import { getCellFunction } from '@/Utils'
 import { useEffect, useState } from 'react'
+import { Checkbox } from './ui/checkbox'
+import { Label } from './ui/label'
+import FormField from './FormField'
 
 type props = {
   sheetName: string
@@ -16,6 +19,7 @@ const webpcf = 'WEBPCF'
 
 const Sheet = ({ sheetName, file }: props) => {
   const [contains, setContains] = useState<boolean>(false)
+  const [starterCell, setStarterCell] = useState<string>('C28')
 
   useEffect(() => {
     const cellContainsString = async () => {
@@ -25,10 +29,11 @@ const Sheet = ({ sheetName, file }: props) => {
           webpcf,
           'E10'
         )) as string
-        console.log(cellFunction)
         if (
-          //   containsString(cellFunction, targetSheetNames) &&
-          cellFunction.includes(sheetName)
+          cellFunction.includes(sheetName) &&
+          (cellFunction.includes(targetSheetNames[0]) ||
+            cellFunction.includes(targetSheetNames[1]) ||
+            cellFunction.includes(targetSheetNames[2]))
         ) {
           setContains(true)
         }
@@ -40,9 +45,20 @@ const Sheet = ({ sheetName, file }: props) => {
   }, [])
 
   return (
-    <li className={contains ? 'text-green-500' : 'text-red-500'}>
-      {sheetName}
-    </li>
+    <div className="grid grid-cols-4 gap-4 text-left items-center">
+      <Checkbox
+        id={sheetName}
+        checked={contains}
+        onClick={() => setContains(!contains)}
+      />
+      <Label htmlFor={sheetName}>{sheetName}</Label>
+      <FormField
+        htmlFor="starterCell"
+        label="Celda Inicial"
+        value={starterCell}
+        disabled
+      />
+    </div>
   )
 }
 
