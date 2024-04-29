@@ -1,3 +1,6 @@
+import { excelDateToFormattedDate } from './Utils'
+import { queryData } from './components/PlanDePagoAdv'
+
 export const getDataQuery = (
   targetDatabase: string,
   operationNumber: number
@@ -12,6 +15,7 @@ export const getDataQuery = (
   SELECT * FROM SCA_ADMINI..TCO WHERE FLD_TCO_OPER =
   ${operationNumber}`
 }
+
 export const updateQuery = (operationNumber: number): string => {
   return `use sca_hipotec
     GO
@@ -64,4 +68,18 @@ export const updateQuery = (operationNumber: number): string => {
     UPDATE SCA_ADMINI..TCO
     SET FLD_TCO_FPDI = (SELECT MIN(FLD_COL_FVEN) FROM SCA_HIPOTEC..COL WHERE FLD_COL_OPER = @FLD_COL_OPER )
     WHERE FLD_TCO_OPER = @FLD_COL_OPER`
+}
+
+export const unityInsertQuery = (
+  operationNumber: number,
+  { tipo, nroCuota, fecha, cuota, amortizacion, intereses, saldo }: queryData
+): string => {
+  const formattedDate: string = excelDateToFormattedDate(fecha)
+  let result = `insert into PAYMENTS_PLAN_SFCO(operacion, tipo, Num_Cuota, Fec_Venc, Cuota, Amortizacion, Interes, Seguros, Saldo_Insoluto) values('${operationNumber}', '${tipo}', "${nroCuota}", '${formattedDate}', '${Math.trunc(
+    cuota
+  )}', '${Math.trunc(amortizacion)}','${Math.trunc(intereses)}',0,'${Math.trunc(
+    saldo
+  )}');\n`
+
+  return result
 }
