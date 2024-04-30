@@ -26,6 +26,7 @@ const Sheet = (
         htmlFor="starterCell"
         label="Celda Inicial"
         value={starterCell}
+        onChange={(event) => setStarterCell(event.target.value)}
         disabled
       />
     </div>
