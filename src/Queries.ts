@@ -72,14 +72,23 @@ export const updateQuery = (operationNumber: number): string => {
 
 export const unityInsertQuery = (
   operationNumber: number,
-  { tipo, nroCuota, fecha, cuota, amortizacion, intereses, saldo }: queryData
+  {
+    tipo,
+    nroCuota,
+    fecha,
+    cuota,
+    amortizacion,
+    intereses,
+    saldo,
+    seguros,
+  }: queryData
 ): string => {
   const formattedDate: string = excelDateToFormattedDate(fecha)
-  let result = `insert into PAYMENTS_PLAN_SFCO(operacion, tipo, Num_Cuota, Fec_Venc, Cuota, Amortizacion, Interes, Seguros, Saldo_Insoluto) values('${operationNumber}', '${tipo}', "${nroCuota}", '${formattedDate}', '${Math.trunc(
+  let result = `insert into PAYMENTS_PLAN_SFCO(operacion, tipo, Num_Cuota, Fec_Venc, Cuota, Amortizacion, Interes, Seguros, Saldo_Insoluto) values(${operationNumber}, '${tipo}', '${nroCuota}', '${formattedDate}', ${Math.trunc(
     cuota
-  )}', '${Math.trunc(amortizacion)}','${Math.trunc(intereses)}',0,'${Math.trunc(
-    saldo
-  )}');\n`
+  )}, ${Math.trunc(amortizacion)}, ${Math.trunc(
+    intereses
+  )}, ${seguros}, ${Math.trunc(saldo)});\n`
 
   return result
 }
