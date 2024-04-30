@@ -19,10 +19,9 @@ export type queryData = {
   nroCuota: number
   fecha: number
   cuota: number
-  amortizacion: number
+  capital: number
   intereses: number
   saldo: number
-  seguros: number
 }
 
 // const targetSheetNames: 'vehiculo' | 'seguro vehiculo' | 'seguro de vida'
@@ -34,10 +33,8 @@ const cellOperationNumber: string = 'C4'
 const PlanDePagoAdv = () => {
   const [operationNumber, setOperationNumber] = useState<number>(0)
   const [insertQueries, setInsertQueries] = useState<string>('')
-
-  const [file, setFile] = useState<FileList | null>(null)
-
   const [sheetsList, setSheetsList] = useState<sheetProps[]>([])
+  const [file, setFile] = useState<FileList | null>(null)
 
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -64,16 +61,20 @@ const PlanDePagoAdv = () => {
         if (nroCuota !== undefined && typeof nroCuota === 'number') {
           const fecha =
             sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 1 })]?.v
-          const cuota =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 2 })]?.v
-          const capital =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })]?.v
-          const intereses =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })]?.v
-          const seguros =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 5 })]?.v
           const saldo =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 6 })]?.v
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 2 })]?.v
+          const intereses =
+            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })]?.v
+          const capital = sheet[
+            XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })
+          ]?.v
+            ? sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })]?.v
+            : 0
+          const cuota = sheet[
+            XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 6 })
+          ]?.v
+            ? sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 6 })]?.v
+            : 0
           let tipo: number = 0
           switch (sheetName) {
             case 'vehiculo':
@@ -93,11 +94,11 @@ const PlanDePagoAdv = () => {
             nroCuota,
             fecha,
             cuota,
-            amortizacion: capital,
+            capital,
             intereses,
             saldo,
-            seguros,
           }
+          console.log(rowData)
           data = [...data, rowData]
         }
       }
@@ -117,8 +118,11 @@ const PlanDePagoAdv = () => {
     return result
   }
 
-  const createInsertQueries = async (file: File, selectedSheets: string[]) => {
-    let result: string = `use ${targetDatabase} \n`
+  const createInsertQueries = async (file: File, sheetList: sheetProps[]) => {
+    let result: string = `use ${targetDatabase}\n`
+    const selectedSheets = sheetList
+      .filter((sheet) => sheet.checked)
+      .map((sheet) => sheet.name)
     for (const sheet of selectedSheets) {
       const sheetData = await getSheetData(file, sheet)
       result += `---${sheet}---\n`
@@ -182,15 +186,7 @@ const PlanDePagoAdv = () => {
       )}
       <Button
         disabled={file === null}
-        onClick={() =>
-          file &&
-          createInsertQueries(
-            file[0],
-            sheetsList
-              .filter((sheet) => sheet.checked)
-              .map((sheet) => sheet.name)
-          )
-        }
+        onClick={() => file && createInsertQueries(file[0], sheetsList)}
       >
         Crear queries
       </Button>
