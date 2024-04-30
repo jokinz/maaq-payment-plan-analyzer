@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx'
+import { sheetProps } from './components/Sheet'
 
 export const excelDateToFormattedDate = (excelSerialDate: number) => {
   const excelEpoch = new Date('1899-12-31T00:00:00.000Z')
@@ -38,26 +39,77 @@ export const readFile = (file: File): Promise<XLSX.WorkBook> => {
   })
 }
 
-export const getAllSheetNames = (file: File): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
+export const getAllSheetNames = async (file: File): Promise<any> => {
+  try {
+    const workbook = await readFile(file)
+    return workbook.SheetNames
+  } catch (error) {
+    alert(error)
+  }
+}
 
-    reader.onload = (event) => {
-      try {
-        const data = event.target?.result
-        const workbook = XLSX.read(data, { type: 'array' })
-        resolve(workbook.SheetNames)
-      } catch (error) {
-        reject(error)
-      }
+export const getAllSheetsProps = async (file: File): Promise<any> => {
+  const webpcf = 'WEBPCF'
+  const cellAddress = 'E10'
+  try {
+    const workbook = await readFile(file)
+    const sheetNames = workbook.SheetNames
+    let result: Omit<sheetProps, 'updateList'>[] = []
+    for (const sheetName in sheetNames) {
+      const checked: boolean = (await cellFunctionContainsSheetName(
+        file,
+        webpcf,
+        cellAddress,
+        sheetNames[sheetName]
+      )) as boolean
+      const sheet = workbook.Sheets[sheetNames[sheetName]]
+      const paymentsQuantity: number = getPaymentsQuantity(sheet)
+      result = [
+        ...result,
+        { name: sheetNames[sheetName], checked, paymentsQuantity },
+      ]
     }
+    return result
+  } catch (error) {
+    alert(error)
+  }
+}
 
-    reader.onerror = (error) => {
-      reject(error)
+const getPaymentsQuantity = (sheet: XLSX.WorkSheet) => {
+  let result: number = 0
+  const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
+  const colIndex = XLSX.utils.decode_col('A')
+  for (
+    let rowIndex = columnRange.s.r;
+    rowIndex <= columnRange.e.r;
+    rowIndex++
+  ) {
+    const cellAddress = { r: rowIndex, c: colIndex }
+    const cellRef = XLSX.utils.encode_cell(cellAddress)
+    const numCuota = sheet[cellRef]?.v
+    if (numCuota !== undefined && typeof numCuota === 'number') {
+      result++
     }
+  }
+  return result
+}
 
-    reader.readAsArrayBuffer(file)
-  })
+const cellFunctionContainsSheetName = async (
+  file: File,
+  functionSheet: string,
+  functionCell: string,
+  name: string
+) => {
+  try {
+    const cellFunction = (await getCellFunction(
+      file,
+      functionSheet,
+      functionCell
+    )) as string
+    return cellFunction.includes(name)
+  } catch (error) {
+    alert(error)
+  }
 }
 
 export const getCellValue = async (
