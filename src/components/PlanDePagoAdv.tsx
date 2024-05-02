@@ -3,7 +3,12 @@ import { useEffect, useRef, useState } from 'react'
 import * as XLSX from 'xlsx'
 
 import { unityInsertQuery } from '@/Queries'
-import { getAllSheetsProps, getCellValue, readFile } from '@/Utils'
+import {
+  getAllSheetsProps,
+  getCellFunction,
+  getCellValue,
+  readFile,
+} from '@/Utils'
 
 import Wrapper from '@/components/Wrapper'
 import Query from './Query'
@@ -35,6 +40,7 @@ const PlanDePagoAdv = () => {
   const [insertQueries, setInsertQueries] = useState<string>('')
   const [sheetsList, setSheetsList] = useState<sheetProps[]>([])
   const [file, setFile] = useState<FileList | null>(null)
+  const [webpfcFormula, setWebpfcFormula] = useState<string>('')
 
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -143,6 +149,8 @@ const PlanDePagoAdv = () => {
             cellOperationNumber
           )
           setOperationNumber(operationNumber)
+          const formula = await getCellFunction(file[0], webpcf, 'E10')
+          setWebpfcFormula(formula)
         } catch (error) {
           alert(error)
         }
@@ -154,6 +162,16 @@ const PlanDePagoAdv = () => {
     let newSheetList = [...sheetsList]
     newSheetList[index].checked = !newSheetList[index].checked
     setSheetsList(newSheetList)
+  }
+  const highlightSubstring = (text: string) => {
+    let highlightedText = text
+    sheetsList
+      .map((sheet) => sheet.name)
+      .forEach((substring) => {
+        const regex = new RegExp(`(${substring})`, 'gi')
+        highlightedText = highlightedText.replace(regex, '<b><u>$1</u></b>')
+      })
+    return <span dangerouslySetInnerHTML={{ __html: highlightedText }} />
   }
 
   return (
@@ -173,15 +191,21 @@ const PlanDePagoAdv = () => {
       </section>
       {file && (
         <>
-          {sheetsList.map((sheet, index) => (
-            <Sheet
-              key={index}
-              name={sheet.name}
-              checked={sheet.checked}
-              paymentsQuantity={sheet.paymentsQuantity}
-              updateList={() => updateSheetChecked(index)}
-            />
-          ))}
+          <Label htmlFor={webpfcFormula}>Formula en WEBPCF(E10)</Label>
+          <h1>{highlightSubstring(webpfcFormula)}</h1>
+          {sheetsList
+            .sort((a, b) => {
+              return a.checked === b.checked ? 0 : a.checked ? -1 : 1
+            })
+            .map((sheet, index) => (
+              <Sheet
+                key={index}
+                name={sheet.name}
+                checked={sheet.checked}
+                paymentsQuantity={sheet.paymentsQuantity}
+                updateList={() => updateSheetChecked(index)}
+              />
+            ))}
         </>
       )}
       <Button
