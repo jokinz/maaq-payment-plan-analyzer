@@ -75,6 +75,32 @@ export const getAllSheetsProps = async (file: File): Promise<any> => {
   }
 }
 
+export const getSheetsProps = async (file: File, sheetNames: string[]): Promise<any> => {
+  const webpcf = 'WEBPCF'
+  const cellAddress = 'E10'
+  try {
+    const workbook = await readFile(file)
+    let result: Omit<sheetProps, 'updateList'>[] = []
+    for (const sheetName in sheetNames) {
+      const checked: boolean = (await cellFunctionContainsSheetName(
+        file,
+        webpcf,
+        cellAddress,
+        sheetNames[sheetName]
+      )) as boolean
+      const sheet = workbook.Sheets[sheetNames[sheetName]]
+      const paymentsQuantity: number = getPaymentsQuantity(sheet)
+      result = [
+        ...result,
+        { name: sheetNames[sheetName], checked, paymentsQuantity },
+      ]
+    }
+    return result
+  } catch (error) {
+    alert(error)
+  }
+}
+
 const getPaymentsQuantity = (sheet: XLSX.WorkSheet) => {
   let result: number = 0
   const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
