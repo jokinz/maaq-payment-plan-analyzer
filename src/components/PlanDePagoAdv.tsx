@@ -4,11 +4,10 @@ import * as XLSX from 'xlsx'
 
 import { unityInsertQuery } from '@/Queries'
 import {
-  getAllSheetsProps,
   getCellFunction,
   getCellValue,
   getSheetsProps,
-  readFile,
+  readFile
 } from '@/Utils'
 
 import Wrapper from '@/components/Wrapper'
@@ -19,7 +18,6 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 
-// TODO: update types and move type definition
 export type queryData = {
   tipo: number
   nroCuota: number
