@@ -280,7 +280,7 @@ function PlanDePago() {
         )
         setFilePaymentsQuantity(readPaymentsQuantity)
       } catch (error) {
-        console.error('Error reading file:', error)
+        alert('Error reading file:' + error)
       }
     }
   }
@@ -508,7 +508,7 @@ function PlanDePago() {
               try {
                 file && validateData(file[0], targetSheet, paymentNumberColumn)
               } catch (error) {
-                console.error(error)
+                alert(error)
               }
             }}
           >
@@ -559,7 +559,7 @@ function PlanDePago() {
                 setQuery2(updateQueries)
               }
             } catch (error) {
-              console.error(error)
+              alert(error)
             }
           }}
         >
