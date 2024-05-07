@@ -83,3 +83,12 @@ export const unityInsertQuery = (
 
   return result
 }
+
+export const updateOperationPaymentsQuery = (
+  operationNumber: number,
+  updateNumber: number,
+  paymentNumber: number
+): string => {
+  const query: string = `UPDATE SCA_HIPOTEC..COL SET FLD_COL_NDOC = '${updateNumber}' WHERE FLD_COL_OPER = ${operationNumber} AND FLD_COL_NCU = ${paymentNumber};\n`
+  return query
+}
