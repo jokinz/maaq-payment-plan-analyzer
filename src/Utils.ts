@@ -75,7 +75,10 @@ export const getAllSheetsProps = async (file: File): Promise<any> => {
   }
 }
 
-export const getSheetsProps = async (file: File, sheetNames: string[]): Promise<any> => {
+export const getSheetsProps = async (
+  file: File,
+  sheetNames: string[]
+): Promise<any> => {
   const webpcf = 'WEBPCF'
   const cellAddress = 'E10'
   try {
@@ -162,6 +165,20 @@ export const getCellFunction = async (
     const workbook = await readFile(file)
     const sheet = workbook.Sheets[sheetName]
     const cellValue = sheet[cellReference]?.f
+    return cellValue
+  } catch (error) {
+    alert(error)
+  }
+}
+
+export const getOperationsList = async (
+  file: File,
+  sheetName: string = 'MQExcel'
+): Promise<any> => {
+  try {
+    const workbook = await readFile(file)
+    const sheet = workbook.Sheets[sheetName]
+    const cellValue = sheet['A1']?.v
     return cellValue
   } catch (error) {
     alert(error)
