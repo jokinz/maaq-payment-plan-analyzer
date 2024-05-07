@@ -171,16 +171,62 @@ export const getCellFunction = async (
   }
 }
 
-export const getOperationsList = async (
+export const getColumnData = async (
   file: File,
-  sheetName: string = 'MQExcel'
-): Promise<any> => {
+  sheetName: string,
+  colLetter: string,
+  colName?: string
+): Promise<any[]> => {
   try {
     const workbook = await readFile(file)
     const sheet = workbook.Sheets[sheetName]
-    const cellValue = sheet['A1']?.v
-    return cellValue
+    if (colName) {
+      const cellValue = sheet[colLetter + '1']?.v
+      if (cellValue === colName) {
+        let columnData: any[] = []
+        const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
+        const colIndex = XLSX.utils.decode_col(colLetter)
+        for (
+          let rowIndex = columnRange.s.r;
+          rowIndex <= columnRange.e.r;
+          rowIndex++
+        ) {
+          const cellAddress = { r: rowIndex, c: colIndex }
+          const cellRef = XLSX.utils.encode_cell(cellAddress)
+          const numCuota = sheet[cellRef]?.v
+
+          if (numCuota !== undefined && typeof numCuota === 'number') {
+            const operationNumber =
+              sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex })]?.v
+            columnData.push(operationNumber)
+          }
+        }
+        return columnData
+      } else {
+        throw new Error('El nombre de la columna es distinto')
+      }
+    }
+    let columnData: any[] = []
+    const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
+    const colIndex = XLSX.utils.decode_col(colLetter)
+    for (
+      let rowIndex = columnRange.s.r;
+      rowIndex <= columnRange.e.r;
+      rowIndex++
+    ) {
+      const cellAddress = { r: rowIndex, c: colIndex }
+      const cellRef = XLSX.utils.encode_cell(cellAddress)
+      const numCuota = sheet[cellRef]?.v
+
+      if (numCuota !== undefined && typeof numCuota === 'number') {
+        const operationNumber =
+          sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex })]?.v
+        columnData.push(operationNumber)
+      }
+    }
+    return columnData
   } catch (error) {
     alert(error)
   }
+  return []
 }
