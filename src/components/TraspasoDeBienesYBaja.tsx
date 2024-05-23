@@ -19,6 +19,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import FormField from '@/components/FormField'
 import Wrapper from '@/components/Wrapper'
+import BackUp from './BackUp'
+import { goodsBackupQuery } from '@/Queries'
 
 type Status = {
   value: string
@@ -59,6 +61,7 @@ function TraspasoDeBienesYBaja() {
   return (
     <Wrapper>
       <h2 className="font-bold">Traspaso de bienes y baja</h2>
+      <BackUp query={goodsBackupQuery(new Date())} />
       <section className="grid grid-cols-2 gap-8 items-center">
         <div className="grid grid-cols-2 gap-4 items-center text-left">
           <FormField
