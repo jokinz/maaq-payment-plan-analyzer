@@ -39,8 +39,12 @@ function PlanDePago() {
   const [country, setCountry] = useState<Countries>('colombia')
   const [currency, setCurrency] = useState<Currencies>('peso')
 
-  const cellOperationNumber: string = country === 'colombia' ? 'C4' : 'C1'
-  const cellTotalCredit: string = country === 'colombia' ? 'H8' : 'H5'
+  // const cellOperationNumber: string = country === 'colombia' ? 'C4' : 'C1'
+  // const cellTotalCredit: string = country === 'colombia' ? 'H8' : 'H5'
+  const [cellOperationNumber, setCellOperationNumber] = useState<string>('C4')
+  const [cellTotalCredit, setCellTotalCredit] = useState<string>('H8')
+  const [updatingCellOperationNumber, setUpdatingCellOperationNumber] = useState<boolean>(false);
+  const [updatingCellTotalCredit, setUpdatingCellTotalCredit] = useState<boolean>(false);
   const paymentNumberColumn = 'B'
 
   // TODO: check if SFL is correct
@@ -335,19 +339,23 @@ function PlanDePago() {
             </div>
           </RadioGroup>
         </div>
-        <div className="grid grid-cols-2 gap-4 items-center text-left">
+        <div className="grid grid-cols-3 gap-4 items-center text-left">
           <FormField
             htmlFor="cellOperationNumber"
             label="Celda número de operación"
             value={cellOperationNumber}
-            disabled
+            disabled={!updatingCellOperationNumber}
+            onChange={(event) => setCellOperationNumber(event.target.value)}
           />
+          <Button onClick={() => setUpdatingCellOperationNumber(true)}>Cambiar</Button>
           <FormField
             htmlFor="cellTotalCredit"
             label="Celda crédito total"
             value={cellTotalCredit}
-            disabled
+            disabled={!updatingCellTotalCredit}
+            onChange={(event) => setCellTotalCredit(event.target.value)}
           />
+          <Button onClick={() => setUpdatingCellTotalCredit(true)}>Cambiar</Button>
         </div>
         <div className="grid grid-cols-2 gap-4 items-center text-left">
           <FormField
