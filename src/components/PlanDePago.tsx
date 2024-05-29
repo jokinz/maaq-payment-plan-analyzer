@@ -43,8 +43,10 @@ function PlanDePago() {
   // const cellTotalCredit: string = country === 'colombia' ? 'H8' : 'H5'
   const [cellOperationNumber, setCellOperationNumber] = useState<string>('C4')
   const [cellTotalCredit, setCellTotalCredit] = useState<string>('H8')
-  const [updatingCellOperationNumber, setUpdatingCellOperationNumber] = useState<boolean>(false);
-  const [updatingCellTotalCredit, setUpdatingCellTotalCredit] = useState<boolean>(false);
+  const [updatingCellOperationNumber, setUpdatingCellOperationNumber] =
+    useState<boolean>(false)
+  const [updatingCellTotalCredit, setUpdatingCellTotalCredit] =
+    useState<boolean>(false)
   const paymentNumberColumn = 'B'
 
   // TODO: check if SFL is correct
@@ -293,6 +295,10 @@ function PlanDePago() {
   const restartValues = () => {
     setCountry('colombia')
     setCurrency('peso')
+    setCellOperationNumber('C4')
+    setUpdatingCellOperationNumber(false)
+    setCellTotalCredit('H8')
+    setUpdatingCellTotalCredit(false)
     setExternalOperationNumber(0)
     setExternalTotalCredit(0)
     setExternalPaymentsQuantity(0)
@@ -347,7 +353,9 @@ function PlanDePago() {
             disabled={!updatingCellOperationNumber}
             onChange={(event) => setCellOperationNumber(event.target.value)}
           />
-          <Button onClick={() => setUpdatingCellOperationNumber(true)}>Cambiar</Button>
+          <Button onClick={() => setUpdatingCellOperationNumber(true)}>
+            Cambiar
+          </Button>
           <FormField
             htmlFor="cellTotalCredit"
             label="Celda crédito total"
@@ -355,7 +363,9 @@ function PlanDePago() {
             disabled={!updatingCellTotalCredit}
             onChange={(event) => setCellTotalCredit(event.target.value)}
           />
-          <Button onClick={() => setUpdatingCellTotalCredit(true)}>Cambiar</Button>
+          <Button onClick={() => setUpdatingCellTotalCredit(true)}>
+            Cambiar
+          </Button>
         </div>
         <div className="grid grid-cols-2 gap-4 items-center text-left">
           <FormField
