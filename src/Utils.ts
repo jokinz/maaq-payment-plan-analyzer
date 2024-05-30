@@ -230,3 +230,22 @@ export const getColumnData = async (
   }
   return []
 }
+
+export const getSheetData = async (
+  file: File,
+  sheetName: string
+): Promise<any> => {
+  const workbook = await readFile(file)
+  const sheet = workbook.Sheets[sheetName]
+
+  if (!sheet) {
+    throw new Error(`Sheet with name "${sheetName}" not found`)
+  }
+
+  const sheetData: any[][] = XLSX.utils.sheet_to_json(sheet, {
+    header: 1,
+    defval: '',
+  })
+  const data = sheetData.map(row => row.map(cell => ({ value: cell })))
+  return data
+}
