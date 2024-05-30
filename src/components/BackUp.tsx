@@ -15,7 +15,7 @@ const BackUp = ({ query }: props) => {
   return (
     <Collapsible className="mb-4">
       <CollapsibleTrigger className="mb-4">
-        <Button>Crear respaldo</Button>
+        <p>Crear respaldo</p>
       </CollapsibleTrigger>
       <CollapsibleContent>
         <Query content={query} />
