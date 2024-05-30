@@ -295,7 +295,7 @@ function PlanDePago() {
   }
 
   const validate = async () => {
-    if (file && file.length > 0) {
+    if (file && file.length > 0 && targetSheet) {
       try {
         const readOperationNumber = await getCellValue(
           file[0],
@@ -448,12 +448,12 @@ function PlanDePago() {
               accept=".xls, .xlsm, .xlsx"
               onChange={(event) => setFile(event.currentTarget.files)}
             />
-            {file && file.length > 0 && (
+            {file && file.length > 0 && targetSheet && (
               <>
                 <Label htmlFor="selectedSheet">Hoja:</Label>
                 <Select
                   value={targetSheet}
-                  onValueChange={(sheet) => setTargetSheet(sheet)}
+                  onValueChange={(sheet: string) => setTargetSheet(sheet)}
                   name="selectedSheet"
                   disabled={file && file.length > 0 === null}
                 >
@@ -562,7 +562,7 @@ function PlanDePago() {
             onClick={(event) => {
               event.preventDefault()
               try {
-                file && validateData(file[0], targetSheet, paymentNumberColumn)
+                file && targetSheet && validateData(file[0], targetSheet, paymentNumberColumn)
               } catch (error) {
                 alert(error)
               }
@@ -606,7 +606,7 @@ function PlanDePago() {
           onClick={async (event) => {
             event.preventDefault()
             try {
-              if (file) {
+              if (file && targetSheet) {
                 const updateQueries = await createUpdateQueries(
                   file[0],
                   targetSheet,
