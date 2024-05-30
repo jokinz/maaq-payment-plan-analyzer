@@ -8,6 +8,7 @@ import {
   excelDateToFormattedDate,
   getAllSheetNames,
   getCellValue,
+  getSheetData,
   readFile,
 } from '../Utils'
 import { getDataQuery, paymentPlansBackupQuery, updateQuery } from '../Queries'
@@ -29,6 +30,8 @@ import {
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons'
+import Spreadsheet from 'react-spreadsheet'
+
 import Wrapper from './Wrapper'
 import BackUp from './BackUp'
 
@@ -48,6 +51,7 @@ function PlanDePago() {
   const [updatingCellTotalCredit, setUpdatingCellTotalCredit] =
     useState<boolean>(false)
   const paymentNumberColumn = 'B'
+  const WEBPCF: string = 'WEBPCF'
 
   // TODO: check if SFL is correct
   const targetDatabase = country === 'colombia' ? 'BT_SFCO' : 'SFL'
@@ -60,7 +64,7 @@ function PlanDePago() {
 
   const [file, setFile] = useState<FileList | null>(null)
 
-  const [targetSheet, setTargetSheet] = useState<string>('WEBPCF')
+  const [targetSheet, setTargetSheet] = useState<string | null>(null)
   const [sheetsList, setSheetsList] = useState<string[]>([])
 
   const [fileOperationNumber, setFileOperationNumber] = useState<number>(0)
@@ -76,14 +80,39 @@ function PlanDePago() {
     : ''
   const fileRef = useRef<HTMLInputElement>(null)
 
+  const [fileSheetData, setFileSheetData] = useState<any[] | null>(null)
+
   useEffect(() => {
-    if (file) {
+    if (file && file.length > 0) {
       ;(async () => {
         const sheetNames = await getAllSheetNames(file[0])
         setSheetsList(sheetNames)
+        if (sheetNames.includes(WEBPCF)) {
+          setTargetSheet(WEBPCF)
+          const sheetData = await getSheetData(file[0], WEBPCF)
+          setFileSheetData(sheetData)
+        } else {
+          setTargetSheet(sheetNames[0])
+          const sheetData = await getSheetData(file[0], sheetNames[0])
+          setFileSheetData(sheetData)
+        }
       })()
+    } else {
+      setSheetsList([])
+      setTargetSheet(null)
+      setFileSheetData(null)
     }
   }, [file])
+  useEffect(() => {
+    if (file && file.length > 0) {
+      ;(async () => {
+        if (targetSheet) {
+          const sheetData = await getSheetData(file[0], targetSheet)
+          setFileSheetData(sheetData)
+        }
+      })()
+    }
+  }, [targetSheet])
 
   const getLastCellValue = async (
     file: File,
@@ -190,7 +219,7 @@ function PlanDePago() {
     try {
       const workbook = await readFile(file)
       const sheet = workbook.Sheets[sheetName]
-      const operationNumber = sheet['C4']?.v
+      const operationNumber = sheet[cellOperationNumber]?.v
 
       const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
       const colIndex = XLSX.utils.decode_col(columnName)
@@ -266,7 +295,7 @@ function PlanDePago() {
   }
 
   const validate = async () => {
-    if (file) {
+    if (file && file.length > 0) {
       try {
         const readOperationNumber = await getCellValue(
           file[0],
@@ -306,6 +335,8 @@ function PlanDePago() {
     setFileOperationNumber(0)
     setFileTotalCredit(0)
     setFilePaymentsQuantity(0)
+    setTargetSheet(null)
+    setFileSheetData(null)
     setQuery2('')
     if (fileRef.current) {
       fileRef.current.value = ''
@@ -319,6 +350,7 @@ function PlanDePago() {
   return (
     <Wrapper>
       <h2 className="font-bold">Aplicación de plan de pago</h2>
+
       <BackUp query={paymentPlansBackupQuery(new Date())} />
       <section className="grid grid-cols-2 gap-8 items-center">
         <div>
@@ -416,26 +448,30 @@ function PlanDePago() {
               accept=".xls, .xlsm, .xlsx"
               onChange={(event) => setFile(event.currentTarget.files)}
             />
-            <Label htmlFor="selectedSheet">Hoja:</Label>
-            <Select
-              value={targetSheet}
-              onValueChange={(sheet) => setTargetSheet(sheet)}
-              name="selectedSheet"
-              disabled={file === null}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar hoja" />
-              </SelectTrigger>
-              <SelectContent>
-                {sheetsList.map((sheetName, index) => {
-                  return (
-                    <SelectItem key={index} value={sheetName}>
-                      {sheetName}
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
+            {file && file.length > 0 && (
+              <>
+                <Label htmlFor="selectedSheet">Hoja:</Label>
+                <Select
+                  value={targetSheet}
+                  onValueChange={(sheet) => setTargetSheet(sheet)}
+                  name="selectedSheet"
+                  disabled={file && file.length > 0 === null}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar hoja" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sheetsList.map((sheetName, index) => {
+                      return (
+                        <SelectItem key={index} value={sheetName}>
+                          {sheetName}
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
+              </>
+            )}
           </div>
 
           <Button
@@ -585,6 +621,11 @@ function PlanDePago() {
         >
           Crear Update Queries
         </Button>
+        {fileSheetData && (
+          <div className="overflow-scroll max-h-96 col-span-2">
+            <Spreadsheet data={fileSheetData} />
+          </div>
+        )}
         <h3 className="col-span-2 font-bold">Update queries: </h3>
         <Query content={query2}></Query>
         <Query content={query3}></Query>
