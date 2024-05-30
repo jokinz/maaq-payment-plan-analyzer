@@ -39,12 +39,13 @@ export const readFile = (file: File): Promise<XLSX.WorkBook> => {
   })
 }
 
-export const getAllSheetNames = async (file: File): Promise<any> => {
+export const getAllSheetNames = async (file: File): Promise<string[]> => {
   try {
     const workbook = await readFile(file)
     return workbook.SheetNames
   } catch (error) {
     alert(error)
+    return []
   }
 }
 
