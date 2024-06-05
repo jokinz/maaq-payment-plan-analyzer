@@ -175,41 +175,13 @@ export const getCellFunction = async (
 export const getColumnData = async (
   file: File,
   sheetName: string,
-  colLetter: string,
-  colName?: string
+  colIndex: number,
 ): Promise<any[]> => {
   try {
     const workbook = await readFile(file)
     const sheet = workbook.Sheets[sheetName]
-    if (colName) {
-      const cellValue = sheet[colLetter + '1']?.v
-      if (cellValue === colName) {
-        let columnData: any[] = []
-        const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
-        const colIndex = XLSX.utils.decode_col(colLetter)
-        for (
-          let rowIndex = columnRange.s.r;
-          rowIndex <= columnRange.e.r;
-          rowIndex++
-        ) {
-          const cellAddress = { r: rowIndex, c: colIndex }
-          const cellRef = XLSX.utils.encode_cell(cellAddress)
-          const numCuota = sheet[cellRef]?.v
-
-          if (numCuota !== undefined && typeof numCuota === 'number') {
-            const operationNumber =
-              sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex })]?.v
-            columnData.push(operationNumber)
-          }
-        }
-        return columnData
-      } else {
-        throw new Error('El nombre de la columna es distinto')
-      }
-    }
     let columnData: any[] = []
     const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
-    const colIndex = XLSX.utils.decode_col(colLetter)
     for (
       let rowIndex = columnRange.s.r;
       rowIndex <= columnRange.e.r;
@@ -247,6 +219,57 @@ export const getSheetData = async (
     header: 1,
     defval: '',
   })
-  const data = sheetData.map(row => row.map(cell => ({ value: cell })))
+  const data = sheetData.map((row) => row.map((cell) => ({ value: cell })))
   return data
+}
+
+export const getColumnNames = async (file: File): Promise<string[]> => {
+  try {
+    const workbook = await readFile(file)
+    const sheetName = workbook.SheetNames[0]
+    const sheet = workbook.Sheets[sheetName]
+
+    const range = XLSX.utils.decode_range(sheet['!ref'] || '')
+    let found = false
+    let startRow = 0
+    let startCol = 0
+
+    for (let R = range.s.r; R <= range.e.r && !found; ++R) {
+      for (let C = range.s.c; C <= range.e.c && !found; ++C) {
+        const cellAddress = { c: C, r: R }
+        const cellRef = XLSX.utils.encode_cell(cellAddress)
+        const cellValue = sheet[cellRef]?.v
+        if (cellValue !== undefined) {
+          startRow = R
+          startCol = C
+          found = true
+        }
+      }
+    }
+
+    if (!found) {
+      return []
+    }
+
+    const values: string[] = []
+    let col = startCol
+
+    while (true) {
+      const cellAddress = { c: col, r: startRow }
+      const cellRef = XLSX.utils.encode_cell(cellAddress)
+      const cellValue = sheet[cellRef]?.v
+
+      if (cellValue === undefined) {
+        break
+      }
+
+      values.push(cellValue.toString())
+      col++
+    }
+
+    return values
+  } catch (error) {
+    alert(error)
+    return []
+  }
 }
