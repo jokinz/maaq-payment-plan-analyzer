@@ -18,8 +18,8 @@ import {
 } from './ui/select'
 
 const numerosDosSheetName = 'MQExcel'
-const _operationColumnName = 'Operación'
-const _paymentColumnName = 'Cuota'
+const operationColumnName = 'Operación'
+const paymentColumnName = 'Cuota'
 
 const NumerosDos = () => {
   const [updateNumber, setUpdateNumber] = useState<number>(2)
