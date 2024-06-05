@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 
 import { unityInsertQuery } from '@/Queries'
 import {
+  getAllSheetNames,
   getCellFunction,
   getCellValue,
   getSheetsProps,
@@ -197,11 +198,11 @@ const PlanDePagoAdv = () => {
   }
 
   useEffect(() => {
-    if (file) {
+    if (file && file.length > 0) {
       ;(async () => {
         try {
-          const validSheets = await getValidSheetsNames(file[0])
-          const sheetProps = await getSheetsProps(file[0], validSheets)
+          // const validSheets = await getValidSheetsNames(file[0])
+          const sheetProps = await getSheetsProps(file[0], await getAllSheetNames(file[0]))
           setSheetsList(sheetProps)
           const operationNumber = await getCellValue(
             file[0],
@@ -250,7 +251,7 @@ const PlanDePagoAdv = () => {
           />
         </div>
       </section>
-      {file && (
+      {file && file.length > 0 && (
         <>
           <Label htmlFor={webpfcFormula}>Formula en WEBPCF(E10)</Label>
           <h1>{highlightSubstring(webpfcFormula)}</h1>
