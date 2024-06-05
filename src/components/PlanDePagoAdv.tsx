@@ -46,7 +46,7 @@ const PlanDePagoAdv = () => {
 
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const getValidSheetsNames = async (file: File) => {
+  const _getValidSheetsNames = async (file: File) => {
     const validSheets: string[] = []
     try {
       const workbook = await readFile(file)
