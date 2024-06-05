@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from './ui/select'
 
-const numerosDosSheetName = 'MQExcel'
+// const numerosDosSheetName = 'MQExcel'
 const operationColumnName = 'Operación'
 const paymentColumnName = 'Cuota'
 
@@ -40,12 +40,10 @@ const NumerosDos = () => {
     try {
       const operationList = await getColumnData(
         file,
-        numerosDosSheetName,
         operationNumberColumn
       )
       const paymentList = await getColumnData(
         file,
-        numerosDosSheetName,
         paymentNumberColumn
       )
       if (operationList.length === paymentList.length) {
