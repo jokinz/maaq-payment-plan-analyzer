@@ -174,12 +174,11 @@ export const getCellFunction = async (
 
 export const getColumnData = async (
   file: File,
-  sheetName: string,
   colIndex: number,
 ): Promise<any[]> => {
   try {
     const workbook = await readFile(file)
-    const sheet = workbook.Sheets[sheetName]
+    const sheet = workbook.Sheets[workbook.SheetNames[0]]
     let columnData: any[] = []
     const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
     for (
@@ -270,6 +269,7 @@ export const getColumnNames = async (file: File): Promise<string[]> => {
     return values
   } catch (error) {
     alert(error)
+    console.error(error)
     return []
   }
 }
