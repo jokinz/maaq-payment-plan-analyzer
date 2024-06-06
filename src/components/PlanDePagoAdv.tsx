@@ -19,6 +19,7 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import FormField from './FormField'
+import { LoadingSpinner } from './LoadingSpinner'
 
 export type queryData = {
   tipo: number
@@ -35,6 +36,7 @@ export type queryData = {
 const targetDatabase: string = 'MQTools'
 const webpcf: string = 'WEBPCF'
 const cellOperationNumber: string = 'C4'
+const starterFunctionCellLocation: string = 'E10'
 
 const pattern = ['PERIODO', 'FECHA', 'SALDO', 'INTERESES', 'CAPITAL', 'CUOTA']
 
@@ -43,8 +45,12 @@ const PlanDePagoAdv = () => {
   const [insertQueries, setInsertQueries] = useState<string>('')
   const [sheetsList, setSheetsList] = useState<sheetProps[]>([])
   const [file, setFile] = useState<FileList | null>(null)
-  const [webpfcFormula, setWebpfcFormula] = useState<string>('')
-  const [functionCellLocation, setFunctionCellLocation] = useState('E10')
+  const [webpfcFunction, setWebpfcFunction] = useState<string>('')
+  const [functionCellLocation, setFunctionCellLocation] = useState(
+    starterFunctionCellLocation
+  )
+  const [loading, setLoading] = useState<boolean>(false)
+  const [dataLoaded, setDataLoaded] = useState<boolean>(false)
 
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -65,6 +71,7 @@ const PlanDePagoAdv = () => {
           const header4Cell = sheet[XLSX.utils.encode_cell({ r: rowNum, c: 3 })]
           const header5Cell = sheet[XLSX.utils.encode_cell({ r: rowNum, c: 4 })]
           const header6Cell = sheet[XLSX.utils.encode_cell({ r: rowNum, c: 5 })]
+          const header7Cell = sheet[XLSX.utils.encode_cell({ r: rowNum, c: 6 })]
 
           if (
             !header1Cell &&
@@ -83,17 +90,31 @@ const PlanDePagoAdv = () => {
           const header4 = header4Cell ? header4Cell.v : ''
           const header5 = header5Cell ? header5Cell.v : ''
           const header6 = header6Cell ? header6Cell.v : ''
-
-          if (
-            header1 == pattern[0] &&
-            header2 == pattern[1] &&
-            header3 == pattern[2] &&
-            header4 == pattern[3] &&
-            header5 == pattern[4] &&
-            header6 == pattern[5]
-          ) {
-            isValidSheet = true
-            continue
+          if (header6 !== pattern[5] && header7Cell) {
+            const header7 = header7Cell ? header7Cell.v : ''
+            if (
+              header1 == pattern[0] &&
+              header2 == pattern[1] &&
+              header3 == pattern[2] &&
+              header4 == pattern[3] &&
+              header5 == pattern[4] &&
+              header7 == pattern[5]
+            ) {
+              isValidSheet = true
+              continue
+            }
+          } else {
+            if (
+              header1 == pattern[0] &&
+              header2 == pattern[1] &&
+              header3 == pattern[2] &&
+              header4 == pattern[3] &&
+              header5 == pattern[4] &&
+              header6 == pattern[5]
+            ) {
+              isValidSheet = true
+              continue
+            }
           }
         }
         if (isValidSheet) {
@@ -110,6 +131,7 @@ const PlanDePagoAdv = () => {
   const getSheetData = async (
     file: File,
     sheetName: string,
+    tipo: number,
     columnName: string = 'A'
   ): Promise<any> => {
     try {
@@ -144,20 +166,7 @@ const PlanDePagoAdv = () => {
           ]?.v
             ? sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 6 })]?.v
             : 0
-          let tipo: number = 0
-          switch (sheetName) {
-            case 'vehiculo':
-              tipo = 1
-              break
 
-            case 'seguro vehiculo':
-              tipo = 2
-              break
-
-            case 'seguro de vida':
-              tipo = 3
-              break
-          }
           const rowData: queryData = {
             tipo,
             nroCuota,
@@ -187,46 +196,71 @@ const PlanDePagoAdv = () => {
   }
 
   const createInsertQueries = async (file: File, sheetList: sheetProps[]) => {
-    const operationNumber = await getCellValue(file, webpcf, cellOperationNumber)
-    let result: string = `use ${targetDatabase}\n----OP ${operationNumber}----\n`
+    const operationNumber = await getCellValue(
+      file,
+      webpcf,
+      cellOperationNumber
+    )
+    let result: string = `--------OP ${operationNumber}--------\n`
     const selectedSheets = sheetList
       .filter((sheet) => sheet.checked)
-      .map((sheet) => sheet.name)
+      .map((sheet) => {
+        return { name: sheet.name, type: sheet.type }
+      })
     for (const sheet of selectedSheets) {
-      const sheetData = await getSheetData(file, sheet)
-      result += `---${sheet}---\n`
+      const sheetData = await getSheetData(file, sheet.name, sheet.type)
+      result += `---${sheet.name}---\n`
       result += createSheetQueries(sheetData)
     }
     setInsertQueries(result)
   }
 
   const getData = async (file: File) => {
+    setLoading(true)
     try {
-      // const validSheets = await getValidSheetsNames(file[0])
-      const sheetProps = await getSheetsProps(
-        file,
-        await getAllSheetNames(file),
-        functionCellLocation
-      )
-      setSheetsList(sheetProps)
-      const operationNumber = await getCellValue(
+      const cellfunction = await getCellFunction(
         file,
         webpcf,
-        cellOperationNumber
+        functionCellLocation
       )
-      setOperationNumber(operationNumber)
-      const formula = await getCellFunction(file, webpcf, functionCellLocation)
-      if (formula) {
-        setWebpfcFormula(formula)
+      if (cellfunction) {
+        setWebpfcFunction(cellfunction)
+        // const sheets = await getValidSheetsNames(file)
+        const sheets = await getAllSheetNames(file)
+        const sheetProps = await getSheetsProps(
+          file,
+          sheets,
+          functionCellLocation
+        )
+        setSheetsList(sheetProps)
+        const operationNumber = await getCellValue(
+          file,
+          webpcf,
+          cellOperationNumber
+        )
+        setOperationNumber(operationNumber)
+      } else {
+        setWebpfcFunction('')
+        setSheetsList([])
+        setOperationNumber(0)
       }
     } catch (error) {
       alert(error)
+    } finally {
+      setLoading(false)
+      setDataLoaded(true)
     }
   }
 
   const updateSheetChecked = (index: number) => {
     let newSheetList = [...sheetsList]
     newSheetList[index].checked = !newSheetList[index].checked
+    setSheetsList(newSheetList)
+  }
+
+  const updateSheetType = (index: number, type: number) => {
+    let newSheetList = [...sheetsList]
+    newSheetList[index].type = type
     setSheetsList(newSheetList)
   }
 
@@ -263,50 +297,52 @@ const PlanDePagoAdv = () => {
             onChange={(event) => setFunctionCellLocation(event.target.value)}
           />
         </div>
-          <Button
-            disabled={file === null}
-            onClick={() => file && file.length > 0 && getData(file[0])}
-          >
-            Cargar data
-          </Button>
+        <Button
+          disabled={file === null}
+          onClick={() => file && file.length > 0 && getData(file[0])}
+        >
+          Cargar data
+        </Button>
       </section>
+      {loading && <LoadingSpinner />}
 
-      {file && file.length > 0 && (
+      {dataLoaded && (
         <>
-          {webpfcFormula !== '' ? (
+          {webpfcFunction !== '' ? (
             <>
-              <Label htmlFor={webpfcFormula}>
+              <Label htmlFor={webpfcFunction}>
                 Formula en WEBPCF({functionCellLocation})
               </Label>
-              <h1>{highlightSubstring(webpfcFormula)}</h1>
+              <h1>{highlightSubstring(webpfcFunction)}</h1>
+              {sheetsList
+                .sort((a, b) => {
+                  return a.checked === b.checked ? 0 : a.checked ? -1 : 1
+                })
+                .map((sheet, index) => (
+                  <Sheet
+                    key={index}
+                    index={index}
+                    name={sheet.name}
+                    checked={sheet.checked}
+                    type={sheet.type}
+                    paymentsQuantity={sheet.paymentsQuantity}
+                    updateSheetChecked={updateSheetChecked}
+                    updateSheetType={updateSheetType}
+                  />
+                ))}
+              <Button
+                disabled={file === null}
+                onClick={() => file && createInsertQueries(file[0], sheetsList)}
+              >
+                Crear queries
+              </Button>
+              <Query content={insertQueries} />
             </>
           ) : (
             <h1 className="bold text-red-600">Fórmula no encontrada</h1>
           )}
-
-          {sheetsList
-            .sort((a, b) => {
-              return a.checked === b.checked ? 0 : a.checked ? -1 : 1
-            })
-            .map((sheet, index) => (
-              <Sheet
-                key={index}
-                name={sheet.name}
-                checked={sheet.checked}
-                paymentsQuantity={sheet.paymentsQuantity}
-                updateList={() => updateSheetChecked(index)}
-              />
-            ))}
         </>
       )}
-
-      <Button
-        disabled={file === null}
-        onClick={() => file && createInsertQueries(file[0], sheetsList)}
-      >
-        Crear queries
-      </Button>
-      <Query content={insertQueries} />
     </Wrapper>
   )
 }
