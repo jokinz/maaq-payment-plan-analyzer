@@ -18,6 +18,7 @@ import Sheet, { sheetProps } from './Sheet'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
+import FormField from './FormField'
 
 export type queryData = {
   tipo: number
@@ -43,6 +44,7 @@ const PlanDePagoAdv = () => {
   const [sheetsList, setSheetsList] = useState<sheetProps[]>([])
   const [file, setFile] = useState<FileList | null>(null)
   const [webpfcFormula, setWebpfcFormula] = useState<string>('')
+  const [functionCellLocation, setFunctionCellLocation] = useState('E10')
 
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -185,7 +187,8 @@ const PlanDePagoAdv = () => {
   }
 
   const createInsertQueries = async (file: File, sheetList: sheetProps[]) => {
-    let result: string = `use ${targetDatabase}\n`
+    const operationNumber = await getCellValue(file, webpcf, cellOperationNumber)
+    let result: string = `use ${targetDatabase}\n----OP ${operationNumber}----\n`
     const selectedSheets = sheetList
       .filter((sheet) => sheet.checked)
       .map((sheet) => sheet.name)
@@ -197,27 +200,29 @@ const PlanDePagoAdv = () => {
     setInsertQueries(result)
   }
 
-  useEffect(() => {
-    if (file && file.length > 0) {
-      ;(async () => {
-        try {
-          // const validSheets = await getValidSheetsNames(file[0])
-          const sheetProps = await getSheetsProps(file[0], await getAllSheetNames(file[0]))
-          setSheetsList(sheetProps)
-          const operationNumber = await getCellValue(
-            file[0],
-            webpcf,
-            cellOperationNumber
-          )
-          setOperationNumber(operationNumber)
-          const formula = await getCellFunction(file[0], webpcf, 'E10')
-          setWebpfcFormula(formula)
-        } catch (error) {
-          alert(error)
-        }
-      })()
+  const getData = async (file: File) => {
+    try {
+      // const validSheets = await getValidSheetsNames(file[0])
+      const sheetProps = await getSheetsProps(
+        file,
+        await getAllSheetNames(file),
+        functionCellLocation
+      )
+      setSheetsList(sheetProps)
+      const operationNumber = await getCellValue(
+        file,
+        webpcf,
+        cellOperationNumber
+      )
+      setOperationNumber(operationNumber)
+      const formula = await getCellFunction(file, webpcf, functionCellLocation)
+      if (formula) {
+        setWebpfcFormula(formula)
+      }
+    } catch (error) {
+      alert(error)
     }
-  }, [file])
+  }
 
   const updateSheetChecked = (index: number) => {
     let newSheetList = [...sheetsList]
@@ -250,11 +255,35 @@ const PlanDePagoAdv = () => {
             onChange={(event) => setFile(event.currentTarget.files)}
           />
         </div>
+        <div className="grid grid-cols-2 gap-4 items-center text-left">
+          <FormField
+            htmlFor="formulaCellLocation"
+            label="Celda de fórmula"
+            value={functionCellLocation}
+            onChange={(event) => setFunctionCellLocation(event.target.value)}
+          />
+        </div>
+          <Button
+            disabled={file === null}
+            onClick={() => file && file.length > 0 && getData(file[0])}
+          >
+            Cargar data
+          </Button>
       </section>
+
       {file && file.length > 0 && (
         <>
-          <Label htmlFor={webpfcFormula}>Formula en WEBPCF(E10)</Label>
-          <h1>{highlightSubstring(webpfcFormula)}</h1>
+          {webpfcFormula !== '' ? (
+            <>
+              <Label htmlFor={webpfcFormula}>
+                Formula en WEBPCF({functionCellLocation})
+              </Label>
+              <h1>{highlightSubstring(webpfcFormula)}</h1>
+            </>
+          ) : (
+            <h1 className="bold text-red-600">Fórmula no encontrada</h1>
+          )}
+
           {sheetsList
             .sort((a, b) => {
               return a.checked === b.checked ? 0 : a.checked ? -1 : 1
@@ -270,6 +299,7 @@ const PlanDePagoAdv = () => {
             ))}
         </>
       )}
+
       <Button
         disabled={file === null}
         onClick={() => file && createInsertQueries(file[0], sheetsList)}
