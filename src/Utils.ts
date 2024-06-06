@@ -44,7 +44,7 @@ export const getAllSheetNames = async (file: File): Promise<string[]> => {
     const workbook = await readFile(file)
     return workbook.SheetNames
   } catch (error) {
-    alert(error)
+    console.error(error)
     return []
   }
 }
@@ -73,15 +73,16 @@ export const getAllSheetsProps = async (file: File): Promise<any> => {
     return result
   } catch (error) {
     alert(error)
+    return []
   }
 }
 
 export const getSheetsProps = async (
   file: File,
-  sheetNames: string[]
+  sheetNames: string[],
+  cellAddress: string
 ): Promise<any> => {
   const webpcf = 'WEBPCF'
-  const cellAddress = 'E10'
   try {
     const workbook = await readFile(file)
     let result: Omit<sheetProps, 'updateList'>[] = []
@@ -96,12 +97,13 @@ export const getSheetsProps = async (
       const paymentsQuantity: number = getPaymentsQuantity(sheet)
       result = [
         ...result,
-        { name: sheetNames[sheetName], checked, paymentsQuantity },
+        { name: sheetNames[sheetName], checked, paymentsQuantity, type:0 },
       ]
     }
     return result
   } catch (error) {
-    alert(error)
+    console.error(error)
+    return []
   }
 }
 
@@ -129,16 +131,22 @@ const cellFunctionContainsSheetName = async (
   functionSheet: string,
   functionCell: string,
   name: string
-) => {
+): Promise<boolean> => {
   try {
     const cellFunction = (await getCellFunction(
       file,
       functionSheet,
       functionCell
     )) as string
-    return cellFunction.includes(name)
+    if (cellFunction !== null) {
+      return cellFunction.includes(name)
+    } else {
+      return false
+    }
   } catch (error) {
-    alert(error)
+    console.error(error)
+    // alert(error)
+    return false
   }
 }
 
@@ -161,20 +169,25 @@ export const getCellFunction = async (
   file: File,
   sheetName: string,
   cellReference: string
-): Promise<any> => {
+): Promise<string | null> => {
   try {
     const workbook = await readFile(file)
     const sheet = workbook.Sheets[sheetName]
-    const cellValue = sheet[cellReference]?.f
-    return cellValue
+    const cellFunction = sheet[cellReference]?.f as string
+    if (sheet[cellReference].hasOwnProperty('f')) {
+      return cellFunction
+    } else {
+      throw new Error('Función no encontrada en ' + cellReference)
+    }
   } catch (error) {
     alert(error)
+    return null
   }
 }
 
 export const getColumnData = async (
   file: File,
-  colIndex: number,
+  colIndex: number
 ): Promise<any[]> => {
   try {
     const workbook = await readFile(file)
