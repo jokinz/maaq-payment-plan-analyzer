@@ -75,6 +75,9 @@ export const unityInsertQuery = (
   { tipo, nroCuota, fecha, cuota, capital, intereses, saldo }: queryData
 ): string => {
   const formattedDate: string = excelDateToFormattedDate(fecha)
+  if (intereses === undefined) {
+    intereses = 0
+  }
   let result = `insert into PAYMENTS_PLAN_SFCO(operacion, tipo, Num_Cuota, Fec_Venc, Cuota, Amortizacion, Interes, Seguros, Saldo_Insoluto) values(${operationNumber}, '${tipo}', ${nroCuota}, '${formattedDate}', ${Math.trunc(
     cuota
   )}, ${Math.trunc(capital)}, ${Math.trunc(intereses)}, 0, ${Math.trunc(
