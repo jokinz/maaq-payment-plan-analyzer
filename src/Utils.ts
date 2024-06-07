@@ -55,7 +55,10 @@ export const getAllSheetsProps = async (file: File): Promise<any> => {
   try {
     const workbook = await readFile(file)
     const sheetNames = workbook.SheetNames
-    let result: Omit<sheetProps, 'updateList'>[] = []
+    let result: Pick<
+      sheetProps,
+      'name' | 'checked' | 'paymentsQuantity' | 'type'
+    >[] = []
     for (const sheetName in sheetNames) {
       const checked: boolean = (await cellFunctionContainsSheetName(
         file,
@@ -67,7 +70,7 @@ export const getAllSheetsProps = async (file: File): Promise<any> => {
       const paymentsQuantity: number = getPaymentsQuantity(sheet)
       result = [
         ...result,
-        { name: sheetNames[sheetName], checked, paymentsQuantity },
+        { name: sheetNames[sheetName], checked, paymentsQuantity, type: 0 },
       ]
     }
     return result
@@ -85,7 +88,10 @@ export const getSheetsProps = async (
   const webpcf = 'WEBPCF'
   try {
     const workbook = await readFile(file)
-    let result: Omit<sheetProps, 'updateList'>[] = []
+    let result: Pick<
+      sheetProps,
+      'name' | 'checked' | 'paymentsQuantity' | 'type'
+    >[] = []
     for (const sheetName in sheetNames) {
       const checked: boolean = (await cellFunctionContainsSheetName(
         file,
@@ -97,7 +103,7 @@ export const getSheetsProps = async (
       const paymentsQuantity: number = getPaymentsQuantity(sheet)
       result = [
         ...result,
-        { name: sheetNames[sheetName], checked, paymentsQuantity, type:0 },
+        { name: sheetNames[sheetName], checked, paymentsQuantity, type: 0 },
       ]
     }
     return result
@@ -285,4 +291,29 @@ export const getColumnNames = async (file: File): Promise<string[]> => {
     console.error(error)
     return []
   }
+}
+
+export const findColumnIndexInRange = (
+  sheet: XLSX.WorkSheet,
+  range: string,
+  searchString: string
+): number | null => {
+  const cellRange = XLSX.utils.decode_range(range)
+
+  for (let rowIndex = cellRange.s.r; rowIndex <= cellRange.e.r; rowIndex++) {
+    for (let colIndex = cellRange.s.c; colIndex <= cellRange.e.c; colIndex++) {
+      const cellAddress = { c: colIndex, r: rowIndex }
+      const cellRef = XLSX.utils.encode_cell(cellAddress)
+      const cell = sheet[cellRef]
+      if (
+        cell &&
+        cell.v &&
+        typeof cell.v === 'string' &&
+        cell.v.toLowerCase() === searchString.toLowerCase()
+      ) {
+        return colIndex
+      }
+    }
+  }
+  return null
 }
