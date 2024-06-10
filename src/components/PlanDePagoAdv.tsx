@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 
 import * as XLSX from 'xlsx'
 
 import { unityInsertQuery } from '@/Queries'
 import {
+  findIndexInRange,
   getAllSheetNames,
   getCellFunction,
   getCellValue,
@@ -15,11 +16,11 @@ import Wrapper from '@/components/Wrapper'
 import Query from './Query'
 import Sheet, { sheetProps } from './Sheet'
 
+import FormField from './FormField'
+import { LoadingSpinner } from './LoadingSpinner'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
-import FormField from './FormField'
-import { LoadingSpinner } from './LoadingSpinner'
 
 export type queryData = {
   tipo: number
@@ -44,6 +45,7 @@ const PlanDePagoAdv = () => {
   const [operationNumber, setOperationNumber] = useState<number>(0)
   const [insertQueries, setInsertQueries] = useState<string>('')
   const [sheetsList, setSheetsList] = useState<sheetProps[]>([])
+
   const [file, setFile] = useState<FileList | null>(null)
   const [webpfcFunction, setWebpfcFunction] = useState<string>('')
   const [functionCellLocation, setFunctionCellLocation] = useState(
@@ -128,6 +130,13 @@ const PlanDePagoAdv = () => {
     return validSheets
   }
 
+  const checkIfSelectedSheetsMissType = () => {
+    const result: boolean = sheetsList
+      .filter((sheet: sheetProps) => sheet.checked)
+      .some((sheet: sheetProps) => sheet.type === 0)
+    return result
+  }
+
   const getSheetData = async (
     file: File,
     sheetName: string,
@@ -187,6 +196,182 @@ const PlanDePagoAdv = () => {
     return
   }
 
+  const getSheetData2 = async (
+    file: File,
+    sheetName: string,
+    tipo: number,
+    searchRange: string = 'A25:J28'
+  ): Promise<any> => {
+    try {
+      let sheetData: {
+        periodo: {
+          index: {
+            rowIndex: number
+            colIndex: number
+          } | null
+        }
+        fecha: {
+          index: {
+            rowIndex: number
+            colIndex: number
+          } | null
+        }
+        saldo: {
+          index: {
+            rowIndex: number
+            colIndex: number
+          } | null
+        }
+        intereses: {
+          index: {
+            rowIndex: number
+            colIndex: number
+          } | null
+        }
+        capital: {
+          index: {
+            rowIndex: number
+            colIndex: number
+          } | null
+        }
+        cuota: {
+          index: {
+            rowIndex: number
+            colIndex: number
+          } | null
+        }
+      } = {
+        periodo: {
+          index: null,
+        },
+        fecha: {
+          index: null,
+        },
+        saldo: {
+          index: null,
+        },
+        intereses: {
+          index: null,
+        },
+        capital: {
+          index: null,
+        },
+        cuota: {
+          index: null,
+        },
+      }
+      const workbook = await readFile(file)
+      const sheet = workbook.Sheets[sheetName]
+      const periodoIndex = findIndexInRange(sheet, searchRange, 'periodo')
+      const fechaIndex = findIndexInRange(sheet, searchRange, 'fecha')
+        ? findIndexInRange(sheet, searchRange, 'fecha')
+        : {
+            rowIndex: 24,
+            colIndex: 1,
+          }
+      const saldoIndex = findIndexInRange(sheet, searchRange, 'saldo')
+      const interesesIndex = findIndexInRange(sheet, searchRange, 'intereses')
+      const capitalIndex = findIndexInRange(sheet, searchRange, 'capital')
+      const cuotaIndex = findIndexInRange(sheet, searchRange, 'cuota')
+      sheetData.periodo.index = periodoIndex
+      sheetData.fecha.index = fechaIndex
+      sheetData.saldo.index = saldoIndex
+      sheetData.intereses.index = interesesIndex
+      sheetData.capital.index = capitalIndex
+      sheetData.cuota.index = cuotaIndex
+
+      const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
+      let data: queryData[] = []
+
+      if (
+        sheetData.periodo.index &&
+        sheetData.fecha.index &&
+        sheetData.saldo.index &&
+        sheetData.intereses.index &&
+        sheetData.capital.index &&
+        sheetData.cuota.index
+      ) {
+        for (
+          let rowIndex = columnRange.s.r;
+          rowIndex <= columnRange.e.r;
+          rowIndex++
+        ) {
+          const cellAddress: {
+            r: number
+            c: number
+          } = { r: rowIndex, c: sheetData.periodo.index.colIndex }
+          const cellRef = XLSX.utils.encode_cell(cellAddress)
+          const nroCuota = sheet[cellRef]?.v
+          if (nroCuota !== undefined && typeof nroCuota === 'number') {
+            const fecha =
+              sheet[
+                XLSX.utils.encode_cell({
+                  r: rowIndex,
+                  c: sheetData.fecha.index.colIndex,
+                })
+              ]?.v
+            const saldo =
+              sheet[
+                XLSX.utils.encode_cell({
+                  r: rowIndex,
+                  c: sheetData.saldo.index.colIndex,
+                })
+              ]?.v
+            const intereses =
+              sheet[
+                XLSX.utils.encode_cell({
+                  r: rowIndex,
+                  c: sheetData.intereses.index.colIndex,
+                })
+              ]?.v
+            const capital = sheet[
+              XLSX.utils.encode_cell({
+                r: rowIndex,
+                c: sheetData.capital.index.colIndex,
+              })
+            ]?.v
+              ? sheet[
+                  XLSX.utils.encode_cell({
+                    r: rowIndex,
+                    c: sheetData.capital.index.colIndex,
+                  })
+                ]?.v
+              : 0
+            const cuota = sheet[
+              XLSX.utils.encode_cell({
+                r: rowIndex,
+                c: sheetData.cuota.index.colIndex,
+              })
+            ]?.v
+              ? sheet[
+                  XLSX.utils.encode_cell({
+                    r: rowIndex,
+                    c: sheetData.cuota.index.colIndex,
+                  })
+                ]?.v
+              : 0
+
+            const rowData: queryData = {
+              tipo,
+              nroCuota,
+              fecha,
+              cuota,
+              capital,
+              intereses,
+              saldo,
+            }
+            data = [...data, rowData]
+          }
+        }
+      }
+      return data
+    } catch (error) {
+      alert(error)
+    }
+
+    return
+  }
+
   const createSheetQueries = (queryData: queryData[]) => {
     let result: string = ''
     queryData.forEach((data) => {
@@ -208,7 +393,7 @@ const PlanDePagoAdv = () => {
         return { name: sheet.name, type: sheet.type }
       })
     for (const sheet of selectedSheets) {
-      const sheetData = await getSheetData(file, sheet.name, sheet.type)
+      const sheetData = await getSheetData2(file, sheet.name, sheet.type)
       result += `---${sheet.name}---\n`
       result += createSheetQueries(sheetData)
     }
@@ -331,7 +516,7 @@ const PlanDePagoAdv = () => {
                   />
                 ))}
               <Button
-                disabled={file === null}
+                disabled={checkIfSelectedSheetsMissType()}
                 onClick={() => file && createInsertQueries(file[0], sheetsList)}
               >
                 Crear queries
