@@ -40,18 +40,18 @@ const Sheet = ({
       />
       <Label htmlFor="selectedType">Tipo</Label>
       <Select
-        value={type}
-        onValueChange={(newType) => updateSheetType(index, newType)}
+        value={type.toString()}
+        onValueChange={(newType) => updateSheetType(index, Number(newType))}
         name="selectedType"
       >
         <SelectTrigger>
           <SelectValue placeholder="Selec." />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={1}>1 Finaciamiento (Vehiculo)</SelectItem>
-          <SelectItem value={2}>2 Seguro vehicular (Seguro)</SelectItem>
-          <SelectItem value={3}>3 Seguros de vida (Seguro de vida)</SelectItem>
-          <SelectItem value={4}>4 Seguros externos</SelectItem>
+          <SelectItem value={'1'}>1 Finaciamiento (Vehiculo)</SelectItem>
+          <SelectItem value={'2'}>2 Seguro vehicular (Seguro)</SelectItem>
+          <SelectItem value={'3'}>3 Seguros de vida (Seguro de vida)</SelectItem>
+          <SelectItem value={'4'}>4 Seguros externos</SelectItem>
         </SelectContent>
       </Select>
       <Label htmlFor={name}>
