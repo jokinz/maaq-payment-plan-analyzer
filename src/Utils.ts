@@ -226,19 +226,25 @@ export const getSheetData = async (
   file: File,
   sheetName: string
 ): Promise<any> => {
-  const workbook = await readFile(file)
-  const sheet = workbook.Sheets[sheetName]
+  try {
+    const workbook = await readFile(file)
+    const sheet = workbook.Sheets[sheetName]
 
-  if (!sheet) {
-    throw new Error(`Sheet with name "${sheetName}" not found`)
+    if (!sheet) {
+      throw new Error(`Hoja "${sheetName}" no encontrada`)
+    }
+
+    const sheetData: any[][] = XLSX.utils.sheet_to_json(sheet, {
+      header: 1,
+      defval: '',
+      raw: false
+      
+    })
+    const data = sheetData.map((row) => row.map((cell) => ({ value: cell })))
+    return data
+  } catch (error) {
+    alert(error)
   }
-
-  const sheetData: any[][] = XLSX.utils.sheet_to_json(sheet, {
-    header: 1,
-    defval: '',
-  })
-  const data = sheetData.map((row) => row.map((cell) => ({ value: cell })))
-  return data
 }
 
 export const getColumnNames = async (file: File): Promise<string[]> => {
@@ -293,11 +299,11 @@ export const getColumnNames = async (file: File): Promise<string[]> => {
   }
 }
 
-export const findColumnIndexInRange = (
+export const findIndexInRange = (
   sheet: XLSX.WorkSheet,
   range: string,
   searchString: string
-): number | null => {
+): { rowIndex: number; colIndex: number } | null => {
   const cellRange = XLSX.utils.decode_range(range)
 
   for (let rowIndex = cellRange.s.r; rowIndex <= cellRange.e.r; rowIndex++) {
@@ -311,7 +317,7 @@ export const findColumnIndexInRange = (
         typeof cell.v === 'string' &&
         cell.v.toLowerCase() === searchString.toLowerCase()
       ) {
-        return colIndex
+        return { rowIndex, colIndex }
       }
     }
   }
