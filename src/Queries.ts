@@ -78,7 +78,7 @@ export const unityInsertQuery = (
   if (intereses === undefined) {
     intereses = 0
   }
-  let result = `insert into PAYMENTS_PLAN_SFCO(operacion, tipo, Num_Cuota, Fec_Venc, Cuota, Amortizacion, Interes, Seguros, Saldo_Insoluto) values(${operationNumber}, '${tipo}', ${nroCuota}, '${formattedDate}', ${Math.trunc(
+  let result = `insert into PAYMENTS_PLAN_SFCO(operacion, tipo, Num_Cuota, Fec_Venc, Cuota, Amortizacion, Interes, Seguros, Saldo_Insoluto) values(${operationNumber}, ${tipo}, ${nroCuota}, '${formattedDate}', ${Math.trunc(
     cuota
   )}, ${Math.trunc(capital)}, ${Math.trunc(intereses)}, 0, ${Math.trunc(
     saldo
