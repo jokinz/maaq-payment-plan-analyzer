@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 
 import * as XLSX from 'xlsx'
 
@@ -137,7 +137,7 @@ const PlanDePagoAdv = () => {
     return result
   }
 
-  const getSheetData = async (
+  const getSheetDataOld = async (
     file: File,
     sheetName: string,
     tipo: number,
@@ -196,7 +196,7 @@ const PlanDePagoAdv = () => {
     return
   }
 
-  const getSheetData2 = async (
+  const getSheetData = async (
     file: File,
     sheetName: string,
     tipo: number,
@@ -393,7 +393,7 @@ const PlanDePagoAdv = () => {
         return { name: sheet.name, type: sheet.type }
       })
     for (const sheet of selectedSheets) {
-      const sheetData = await getSheetData2(file, sheet.name, sheet.type)
+      const sheetData = await getSheetData(file, sheet.name, sheet.type)
       result += `---${sheet.name}---\n`
       result += createSheetQueries(sheetData)
     }
@@ -459,6 +459,10 @@ const PlanDePagoAdv = () => {
       })
     return <span dangerouslySetInnerHTML={{ __html: highlightedText }} />
   }
+
+  useEffect(() => {
+    setDataLoaded(false)
+  }, [file]);
 
   return (
     <Wrapper>
