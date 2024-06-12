@@ -78,11 +78,31 @@ export const unityInsertQuery = (
   if (intereses === undefined) {
     intereses = 0
   }
-  let result = `insert into PAYMENTS_PLAN_SFCO(operacion, tipo, Num_Cuota, Fec_Venc, Cuota, Amortizacion, Interes, Seguros, Saldo_Insoluto) values(${operationNumber}, ${tipo}, ${nroCuota}, '${formattedDate}', ${Math.trunc(
-    cuota
-  )}, ${Math.trunc(capital)}, ${Math.trunc(intereses)}, 0, ${Math.trunc(
-    saldo
-  )});\n`
+  const formatNumber = (value: number): string => {
+    const stringedTruncedNumber = Math.trunc(value).toString()
+    // if (stringedTruncedNumber.length === 1) {
+    //   return `${stringedTruncedNumber}\t\t\t`
+    // }
+    // if (stringedTruncedNumber.length < 4) {
+    //   return `${stringedTruncedNumber}\t\t`
+    // }
+    // return `${stringedTruncedNumber}\t`
+    if (stringedTruncedNumber.length >= 6) {
+      return `${stringedTruncedNumber}\t`
+    }
+    if (stringedTruncedNumber.length >= 3) {
+      return `${stringedTruncedNumber}\t\t`
+    }
+    if (stringedTruncedNumber.length >= 1) {
+      return `${stringedTruncedNumber}\t\t\t`
+    }
+    return `${stringedTruncedNumber}\t\t\t`
+  }
+  const formattedCuota = formatNumber(cuota)
+  const formattedCapital = formatNumber(capital)
+  const formattedIntereses = formatNumber(intereses)
+  const formattedSaldo = formatNumber(saldo)
+  let result = `insert into PAYMENTS_PLAN_SFCO(operacion, tipo, Num_Cuota, Fec_Venc, Cuota, Amortizacion, Interes, Seguros, Saldo_Insoluto) values(${operationNumber}, ${tipo}, ${nroCuota},\t'${formattedDate}', ${formattedCuota}, ${formattedCapital}, ${formattedIntereses}, 0, ${formattedSaldo});\n`
 
   return result
 }
@@ -110,7 +130,7 @@ export const paymentPlansBackupQuery = (date: Date): string => {
   return query
 }
 
-export const goodsBackupQuery =(date: Date): string => {
+export const goodsBackupQuery = (date: Date): string => {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
