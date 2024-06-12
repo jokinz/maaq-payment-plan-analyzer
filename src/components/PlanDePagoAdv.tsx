@@ -462,6 +462,7 @@ const PlanDePagoAdv = () => {
 
   useEffect(() => {
     setDataLoaded(false)
+    setInsertQueries('')
   }, [file]);
 
   return (
