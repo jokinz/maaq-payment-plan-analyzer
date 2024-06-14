@@ -82,8 +82,8 @@ export const getAllSheetsProps = async (file: File): Promise<any> => {
 
 export const getSheetsProps = async (
   file: File,
-  sheetNames: string[],
-  cellAddress: string
+  sheetNames: string[]
+  // cellAddress: string
 ): Promise<any> => {
   const webpcf = 'WEBPCF'
   try {
@@ -93,17 +93,22 @@ export const getSheetsProps = async (
       'name' | 'checked' | 'paymentsQuantity' | 'type'
     >[] = []
     for (const sheetName in sheetNames) {
-      const checked: boolean = (await cellFunctionContainsSheetName(
-        file,
-        webpcf,
-        cellAddress,
-        sheetNames[sheetName]
-      )) as boolean
+      // const checked: boolean = (await cellFunctionContainsSheetName(
+      //   file,
+      //   webpcf,
+      //   cellAddress,
+      //   sheetNames[sheetName]
+      // )) as boolean
       const sheet = workbook.Sheets[sheetNames[sheetName]]
       const paymentsQuantity: number = getPaymentsQuantity(sheet)
       result = [
         ...result,
-        { name: sheetNames[sheetName], checked, paymentsQuantity, type: 0 },
+        {
+          name: sheetNames[sheetName],
+          checked: true,
+          paymentsQuantity,
+          type: 0,
+        },
       ]
     }
     return result
