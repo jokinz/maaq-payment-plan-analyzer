@@ -365,6 +365,8 @@ const PlanDePagoAdv = () => {
             data = [...data, rowData]
           }
         }
+      }else{
+        throw new Error('Nombres de columnas no encontrados')
       }
       if (data[0].nroCuota === 0 && data[1].nroCuota === 0) {
         data.shift()
