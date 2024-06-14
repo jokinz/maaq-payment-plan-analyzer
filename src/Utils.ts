@@ -237,8 +237,7 @@ export const getSheetData = async (
     const sheetData: any[][] = XLSX.utils.sheet_to_json(sheet, {
       header: 1,
       defval: '',
-      raw: false
-      
+      raw: false,
     })
     const data = sheetData.map((row) => row.map((cell) => ({ value: cell })))
     return data
@@ -322,4 +321,60 @@ export const findIndexInRange = (
     }
   }
   return null
+}
+
+export const getColumnFormulas = async (
+  file: File,
+  sheetName: string,
+  cellLocation: string
+): Promise<string[]> => {
+  const formulas: string[] = []
+  try {
+    const workbook = await readFile(file)
+    const sheet = workbook.Sheets[sheetName]
+    if (!sheet) {
+      throw new Error(`Hoja ${sheetName} no encontrada.`)
+    }
+    const startCell = XLSX.utils.decode_cell(cellLocation)
+    let rowIndex = startCell.r
+    const colIndex = startCell.c
+
+    while (true) {
+      const cellAddress = XLSX.utils.encode_cell({ c: colIndex, r: rowIndex })
+      const cell = sheet[cellAddress]
+
+      if (!cell) {
+        break
+      }
+
+      if (cell.f) {
+        formulas.push(cell.f)
+      }
+
+      rowIndex++
+    }
+
+    return formulas
+  } catch (error) {
+    alert(error)
+  }
+
+  return formulas
+}
+
+export const extractSheetNamesFromFormula = (formula: string): string[] => {
+  const sheetNames: Set<string> = new Set()
+
+  const regex = /(?:'([^']+)'|([A-Za-z0-9_]+))!/g
+  let match
+
+  while ((match = regex.exec(formula)) !== null) {
+    if (match[1]) {
+      sheetNames.add(match[1])
+    } else if (match[2]) {
+      sheetNames.add(match[2])
+    }
+  }
+
+  return Array.from(sheetNames)
 }
