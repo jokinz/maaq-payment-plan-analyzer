@@ -48,14 +48,16 @@ const Sheet = ({
           <SelectValue placeholder="Selec." />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={'1'}>1 Finaciamiento (Vehiculo)</SelectItem>
+          <SelectItem value={'1'}>1 Financiamiento (Vehiculo)</SelectItem>
           <SelectItem value={'2'}>2 Seguro vehicular (Seguro)</SelectItem>
-          <SelectItem value={'3'}>3 Seguros de vida (Seguro de vida)</SelectItem>
+          <SelectItem value={'3'}>
+            3 Seguros de vida (Seguro de vida)
+          </SelectItem>
           <SelectItem value={'4'}>4 Seguros externos</SelectItem>
         </SelectContent>
       </Select>
       <Label htmlFor={name}>
-        {name}({paymentsQuantity})
+        {name} [{paymentsQuantity}]
       </Label>
       <FormField
         htmlFor="starterCell"
