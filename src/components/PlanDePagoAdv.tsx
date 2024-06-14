@@ -4,10 +4,12 @@ import * as XLSX from 'xlsx'
 
 import { unityInsertQuery } from '@/Queries'
 import {
+  extractSheetNamesFromFormula,
   findIndexInRange,
   getAllSheetNames,
   getCellFunction,
   getCellValue,
+  getColumnFormulas,
   getSheetsProps,
   readFile,
 } from '@/Utils'
@@ -451,8 +453,8 @@ const PlanDePagoAdv = () => {
 
   const highlightSubstring = (text: string) => {
     let highlightedText = text
-    sheetsList
-      .map((sheet) => sheet.name)
+    extractSheetNamesFromFormula(webpfcFunction)
+      .map((sheetname) => sheetname)
       .forEach((substring) => {
         const regex = new RegExp(`(${substring})`, 'gi')
         highlightedText = highlightedText.replace(regex, '<b><u>$1</u></b>')
