@@ -49,7 +49,7 @@ const PlanDePagoAdv = () => {
   const [sheetsList, setSheetsList] = useState<sheetProps[]>([])
 
   const [file, setFile] = useState<FileList | null>(null)
-  const [webpfcFunction, setWebpfcFunction] = useState<string>('')
+  const [webpfcFunction, setWebpfcFunction] = useState<string[]>([])
   const [functionCellLocation, setFunctionCellLocation] = useState(
     starterFunctionCellLocation
   )
@@ -405,19 +405,39 @@ const PlanDePagoAdv = () => {
   const getData = async (file: File) => {
     setLoading(true)
     try {
+      const formulasList = await getColumnFormulas(
+        file,
+        webpcf,
+        functionCellLocation
+      )
+      let sheetsInFormulas: string[] = []
+      formulasList.forEach(
+        (formula) =>
+          (sheetsInFormulas = [
+            ...sheetsInFormulas,
+            ...extractSheetNamesFromFormula(formula),
+          ])
+      )
+      sheetsInFormulas = [...new Set(sheetsInFormulas)]
+
       const cellfunction = await getCellFunction(
         file,
         webpcf,
         functionCellLocation
       )
       if (cellfunction) {
-        setWebpfcFunction(cellfunction)
-        // const sheets = await getValidSheetsNames(file)
-        const sheets = await getAllSheetNames(file)
+        // setWebpfcFunction(cellfunction)
+        // const sheets = await getAllSheetNames(file)
+        // const sheetProps = await getSheetsProps(
+        //   file,
+        //   sheets,
+        //   functionCellLocation
+        // )
+        setWebpfcFunction(sheetsInFormulas)
         const sheetProps = await getSheetsProps(
           file,
-          sheets,
-          functionCellLocation
+          sheetsInFormulas
+          // functionCellLocation
         )
         setSheetsList(sheetProps)
         const operationNumber = await getCellValue(
@@ -427,7 +447,7 @@ const PlanDePagoAdv = () => {
         )
         setOperationNumber(operationNumber)
       } else {
-        setWebpfcFunction('')
+        setWebpfcFunction([])
         setSheetsList([])
         setOperationNumber(0)
       }
@@ -452,20 +472,25 @@ const PlanDePagoAdv = () => {
   }
 
   const highlightSubstring = (text: string) => {
-    let highlightedText = text
-    extractSheetNamesFromFormula(webpfcFunction)
-      .map((sheetname) => sheetname)
-      .forEach((substring) => {
-        const regex = new RegExp(`(${substring})`, 'gi')
-        highlightedText = highlightedText.replace(regex, '<b><u>$1</u></b>')
-      })
-    return <span dangerouslySetInnerHTML={{ __html: highlightedText }} />
+    // Regular expression to match sheet names in formulas
+    const regex = /(?:'([^']+)'|([A-Za-z0-9_]+))!/g
+
+    // Replace sheet names with underlined versions
+    const highlightedFormula = text.replace(regex, (match, p1, p2) => {
+      const sheetName = p1 || p2
+      return `<b><u>${sheetName}</u></b>!`
+    })
+
+    // Render the formula as HTML
+    return (
+      <span dangerouslySetInnerHTML={{ __html: highlightedFormula }}></span>
+    )
   }
 
   useEffect(() => {
     setDataLoaded(false)
     setInsertQueries('')
-  }, [file]);
+  }, [file])
 
   return (
     <Wrapper>
@@ -500,12 +525,12 @@ const PlanDePagoAdv = () => {
 
       {dataLoaded && (
         <>
-          {webpfcFunction !== '' ? (
+          {webpfcFunction.length > 0 ? (
             <>
-              <Label htmlFor={webpfcFunction}>
+              {/* <Label htmlFor={webpfcFunction}>
                 Formula en WEBPCF({functionCellLocation})
               </Label>
-              <h1>{highlightSubstring(webpfcFunction)}</h1>
+              <h1>{(webpfcFunction)}</h1> */}
               {sheetsList
                 .sort((a, b) => {
                   return a.checked === b.checked ? 0 : a.checked ? -1 : 1
