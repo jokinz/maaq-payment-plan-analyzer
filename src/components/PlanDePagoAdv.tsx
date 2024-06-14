@@ -471,22 +471,6 @@ const PlanDePagoAdv = () => {
     setSheetsList(newSheetList)
   }
 
-  const highlightSubstring = (text: string) => {
-    // Regular expression to match sheet names in formulas
-    const regex = /(?:'([^']+)'|([A-Za-z0-9_]+))!/g
-
-    // Replace sheet names with underlined versions
-    const highlightedFormula = text.replace(regex, (match, p1, p2) => {
-      const sheetName = p1 || p2
-      return `<b><u>${sheetName}</u></b>!`
-    })
-
-    // Render the formula as HTML
-    return (
-      <span dangerouslySetInnerHTML={{ __html: highlightedFormula }}></span>
-    )
-  }
-
   useEffect(() => {
     setDataLoaded(false)
     setInsertQueries('')
