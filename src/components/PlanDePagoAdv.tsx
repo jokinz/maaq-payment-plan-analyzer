@@ -366,6 +366,9 @@ const PlanDePagoAdv = () => {
           }
         }
       }
+      if (data[0].nroCuota === 0 && data[1].nroCuota === 0) {
+        data.shift()
+      }
       return data
     } catch (error) {
       alert(error)
