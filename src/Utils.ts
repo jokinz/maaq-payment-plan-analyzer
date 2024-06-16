@@ -370,7 +370,7 @@ export const getColumnFormulas = async (
 export const extractSheetNamesFromFormula = (formula: string): string[] => {
   const sheetNames: Set<string> = new Set()
 
-  const regex = /(?:'([^']+)'|([A-Za-z0-9_]+))!/g
+  const regex = /(?:'([^']+)'|([\p{L}\p{N}_]+))!/gu
   let match
 
   while ((match = regex.exec(formula)) !== null) {
