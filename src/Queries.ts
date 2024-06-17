@@ -78,15 +78,11 @@ export const unityInsertQuery = (
   if (intereses === undefined) {
     intereses = 0
   }
+  if (saldo === undefined) {
+    saldo = 0
+  }
   const formatNumber = (value: number): string => {
     const stringedTruncedNumber = Math.trunc(value).toString()
-    // if (stringedTruncedNumber.length === 1) {
-    //   return `${stringedTruncedNumber}\t\t\t`
-    // }
-    // if (stringedTruncedNumber.length < 4) {
-    //   return `${stringedTruncedNumber}\t\t`
-    // }
-    // return `${stringedTruncedNumber}\t`
     if (stringedTruncedNumber.length >= 6) {
       return `${stringedTruncedNumber}\t`
     }
