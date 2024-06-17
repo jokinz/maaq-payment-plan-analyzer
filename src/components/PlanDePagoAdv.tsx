@@ -365,7 +365,7 @@ const PlanDePagoAdv = () => {
             data = [...data, rowData]
           }
         }
-      }else{
+      } else {
         throw new Error('Nombres de columnas no encontrados')
       }
       if (data[0].nroCuota === 0 && data[1].nroCuota === 0) {
@@ -410,6 +410,16 @@ const PlanDePagoAdv = () => {
   const getData = async (file: File) => {
     setLoading(true)
     try {
+      const operationNumber = await getCellValue(
+        file,
+        webpcf,
+        cellOperationNumber
+      )
+      if (operationNumber) {
+        setOperationNumber(operationNumber)
+      } else {
+        throw new Error('Número de operación no encontrado')
+      }
       const formulasList = await getColumnFormulas(
         file,
         webpcf,
@@ -424,39 +434,17 @@ const PlanDePagoAdv = () => {
           ])
       )
       sheetsInFormulas = [...new Set(sheetsInFormulas)]
-
-      const cellfunction = await getCellFunction(
-        file,
-        webpcf,
-        functionCellLocation
-      )
-      if (cellfunction) {
-        // setWebpfcFunction(cellfunction)
-        // const sheets = await getAllSheetNames(file)
-        // const sheetProps = await getSheetsProps(
-        //   file,
-        //   sheets,
-        //   functionCellLocation
-        // )
+      if (sheetsInFormulas.length > 0) {
         setWebpfcFunction(sheetsInFormulas)
-        const sheetProps = await getSheetsProps(
-          file,
-          sheetsInFormulas
-          // functionCellLocation
-        )
+        const sheetProps = await getSheetsProps(file, sheetsInFormulas)
         setSheetsList(sheetProps)
-        const operationNumber = await getCellValue(
-          file,
-          webpcf,
-          cellOperationNumber
-        )
-        setOperationNumber(operationNumber)
       } else {
-        setWebpfcFunction([])
-        setSheetsList([])
-        setOperationNumber(0)
+        throw new Error('Ninguna fórmula encontrada')
       }
     } catch (error) {
+      setWebpfcFunction([])
+      setSheetsList([])
+      setOperationNumber(0)
       alert(error)
     } finally {
       setLoading(false)
