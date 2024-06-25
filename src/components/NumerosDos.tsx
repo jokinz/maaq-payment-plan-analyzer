@@ -17,10 +17,6 @@ import {
   SelectValue,
 } from './ui/select'
 
-// const numerosDosSheetName = 'MQExcel'
-const operationColumnName = 'Operación'
-const paymentColumnName = 'Cuota'
-
 const NumerosDos = () => {
   const [updateNumber, setUpdateNumber] = useState<number>(2)
   const [updatingStatus, setUpdatingStatus] = useState<boolean>(false)
