@@ -1,13 +1,8 @@
 import { excelDateToFormattedDate } from './Utils'
 import { queryData } from './components/PlanDePagoAdv'
 
-export const getDataQuery = (
-  targetDatabase: string,
-  operationNumber: number
-): string => {
-  return `use ${targetDatabase}
-  GO
-  
+export const getDataQuery = (operationNumber: number): string => {
+  return `
   SELECT SUM(FLD_COL_AMOR), NUM_CUOTAS = COUNT(1) FROM
   SCA_HIPOTEC..COL 
   WHERE FLD_COL_OPER = ${operationNumber} 
