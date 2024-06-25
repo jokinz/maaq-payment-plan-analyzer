@@ -34,9 +34,7 @@ export type queryData = {
   saldo: number
 }
 
-// const targetSheetNames: 'vehiculo' | 'seguro vehiculo' | 'seguro de vida'
 
-const targetDatabase: string = 'MQTools'
 const webpcf: string = 'WEBPCF'
 const cellOperationNumber: string = 'C4'
 const starterFunctionCellLocation: string = 'E10'
