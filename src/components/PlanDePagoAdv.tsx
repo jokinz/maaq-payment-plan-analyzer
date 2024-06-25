@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import * as XLSX from 'xlsx'
 
@@ -6,12 +6,10 @@ import { unityInsertQuery } from '@/Queries'
 import {
   extractSheetNamesFromFormula,
   findIndexInRange,
-  getAllSheetNames,
-  getCellFunction,
   getCellValue,
   getColumnFormulas,
   getSheetsProps,
-  readFile,
+  readFile
 } from '@/Utils'
 
 import Wrapper from '@/components/Wrapper'
