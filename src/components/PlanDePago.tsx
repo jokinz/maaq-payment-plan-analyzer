@@ -53,9 +53,6 @@ function PlanDePago() {
   const paymentNumberColumn = 'B'
   const WEBPCF: string = 'WEBPCF'
 
-  // TODO: check if SFL is correct
-  const targetDatabase = country === 'colombia' ? 'BT_SFCO' : 'SFL'
-
   const [externalOperationNumber, setExternalOperationNumber] =
     useState<number>(0)
   const [externalTotalCredit, setExternalTotalCredit] = useState<number>(0)
@@ -72,7 +69,7 @@ function PlanDePago() {
   const [filePaymentsQuantity, setFilePaymentsQuantity] = useState<number>(0)
 
   const query1: string = externalOperationNumber
-    ? getDataQuery(targetDatabase, externalOperationNumber)
+    ? getDataQuery(externalOperationNumber)
     : ''
   const [query2, setQuery2] = useState<string>('')
   const query3: string = externalOperationNumber
