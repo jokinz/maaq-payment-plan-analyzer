@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx'
 import { sheetProps } from './components/Sheet'
 
-export const excelDateToFormattedDate = (excelSerialDate: number) => {
+export const excelDateToFormattedDate = (excelSerialDate: number): string => {
   const excelEpoch = new Date('1899-12-31T00:00:00.000Z')
   const excelDate = new Date(
     excelEpoch.getTime() + excelSerialDate * 24 * 60 * 60 * 1000
@@ -50,6 +50,11 @@ export const getAllSheetNames = async (file: File): Promise<string[]> => {
 }
 
 export const getAllSheetsProps = async (file: File): Promise<any> => {
+type PartialSheetProps = Pick<
+  sheetProps,
+  'name' | 'type' | 'checked' | 'paymentsQuantity'
+>
+
   const webpcf = 'WEBPCF'
   const cellAddress = 'E10'
   try {
@@ -91,6 +96,7 @@ export const getSheetsProps = async (
       sheetProps,
       'name' | 'checked' | 'paymentsQuantity' | 'type'
     >[] = []
+    let result: PartialSheetProps[] = []
     for (const sheetName in sheetNames) {
       const sheet = workbook.Sheets[sheetNames[sheetName]]
       const paymentsQuantity: number = getPaymentsQuantity(sheet)
