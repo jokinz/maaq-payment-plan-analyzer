@@ -194,12 +194,17 @@ export const getCellValue = async (
   cellReference: string
 ): Promise<string | number | boolean | Date | undefined> => {
   try {
-    const workbook = await readFile(file)
-    const sheet = workbook.Sheets[sheetName]
-    const cellValue = sheet[cellReference]?.v
-    return cellValue
+    const cellObject = await getCellObject(file, sheetName, cellReference)
+    if (cellObject) {
+      if (cellObject.hasOwnProperty('v')) {
+        const cellValue = cellObject.v
+        return cellValue
+      } else {
+        throw new Error(`Valor no encontrado en ${cellReference}`)
+      }
+    }
   } catch (error) {
-    alert(error)
+    console.error(error)
   }
 }
 
@@ -209,17 +214,17 @@ export const getCellFunction = async (
   cellReference: string
 ): Promise<string | undefined> => {
   try {
-    const workbook = await readFile(file)
-    const sheet = workbook.Sheets[sheetName]
-    const cellFunction = sheet[cellReference]?.f as string
-    if (sheet[cellReference].hasOwnProperty('f')) {
-      return cellFunction
-    } else {
-      throw new Error('Función no encontrada en ' + cellReference)
+    const cellObject = await getCellObject(file, sheetName, cellReference)
+    if (cellObject) {
+      if (cellObject.hasOwnProperty('f')) {
+        const cellFunction = cellObject.f
+        return cellFunction
+      } else {
+        throw new Error(`Función no encontrada en ${cellReference}`)
+      }
     }
   } catch (error) {
-    alert(error)
-    return null
+    console.error(error)
   }
 }
 
@@ -280,8 +285,7 @@ export const getSheetData = async (
 export const getColumnNames = async (file: File): Promise<string[]> => {
   try {
     const workbook = await readFile(file)
-    const sheetName = workbook.SheetNames[0]
-    const sheet = workbook.Sheets[sheetName]
+    const sheet = workbook.Sheets[0]
 
     const range = XLSX.utils.decode_range(sheet['!ref'] || '')
     let found = false
