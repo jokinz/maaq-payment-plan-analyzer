@@ -79,21 +79,20 @@ export const getAllSheetNames = async (file: File): Promise<string[]> => {
   }
 }
 
-export const getAllSheetsProps = async (file: File): Promise<any> => {
 type PartialSheetProps = Pick<
   sheetProps,
   'name' | 'type' | 'checked' | 'paymentsQuantity'
 >
 
+export const getAllSheetsProps = async (
+  file: File
+): Promise<PartialSheetProps[]> => {
   const webpcf = 'WEBPCF'
   const cellAddress = 'E10'
   try {
     const workbook = await readFile(file)
     const sheetNames = workbook.SheetNames
-    let result: Pick<
-      sheetProps,
-      'name' | 'checked' | 'paymentsQuantity' | 'type'
-    >[] = []
+    let result: PartialSheetProps[] = []
     for (const sheetName in sheetNames) {
       const checked: boolean = (await cellFunctionContainsSheetName(
         file,
@@ -147,7 +146,7 @@ export const getSheetsProps = async (
   }
 }
 
-const getPaymentsQuantity = (sheet: XLSX.WorkSheet) => {
+const getPaymentsQuantity = (sheet: XLSX.WorkSheet): number => {
   let result: number = 0
   const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
   const colIndex = XLSX.utils.decode_col('A')
@@ -193,7 +192,7 @@ export const getCellValue = async (
   file: File,
   sheetName: string,
   cellReference: string
-): Promise<any> => {
+): Promise<string | number | boolean | Date | undefined> => {
   try {
     const workbook = await readFile(file)
     const sheet = workbook.Sheets[sheetName]
@@ -208,7 +207,7 @@ export const getCellFunction = async (
   file: File,
   sheetName: string,
   cellReference: string
-): Promise<string | null> => {
+): Promise<string | undefined> => {
   try {
     const workbook = await readFile(file)
     const sheet = workbook.Sheets[sheetName]
