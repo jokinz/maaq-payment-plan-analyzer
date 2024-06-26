@@ -39,6 +39,36 @@ export const readFile = (file: File): Promise<XLSX.WorkBook> => {
   })
 }
 
+export const getSheet = async (
+  file: File,
+  sheetName: string
+): Promise<XLSX.WorkSheet | undefined> => {
+  try {
+    const workbook = await readFile(file)
+    const sheet = workbook.Sheets[sheetName]
+    return sheet
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const getCellObject = async (
+  file: File,
+  sheetName: string,
+  cellReference: string
+): Promise<XLSX.CellObject | undefined> => {
+  try {
+    const sheet = await getSheet(file, sheetName)
+    if (sheet) {
+      const cell: XLSX.CellObject = sheet[cellReference]
+      return cell
+    }
+    throw new Error(`Celda ${cellReference} no encontrada`)
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 export const getAllSheetNames = async (file: File): Promise<string[]> => {
   try {
     const workbook = await readFile(file)
@@ -230,8 +260,7 @@ export const getSheetData = async (
   sheetName: string
 ): Promise<any> => {
   try {
-    const workbook = await readFile(file)
-    const sheet = workbook.Sheets[sheetName]
+    const sheet = await getSheet(file, sheetName)
 
     if (!sheet) {
       throw new Error(`Hoja "${sheetName}" no encontrada`)
@@ -333,8 +362,7 @@ export const getColumnFormulas = async (
 ): Promise<string[]> => {
   const formulas: string[] = []
   try {
-    const workbook = await readFile(file)
-    const sheet = workbook.Sheets[sheetName]
+    const sheet = await getSheet(file, sheetName)
     if (!sheet) {
       throw new Error(`Hoja ${sheetName} no encontrada.`)
     }
