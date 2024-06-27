@@ -515,3 +515,89 @@ export const validateData = async (
     alert(error)
   }
 }
+
+// TODO: update types
+export const createUpdateQueries = async (
+  file: File,
+  sheetName: string,
+  columnName: string,
+  cellOperationNumber: string
+): Promise<any> => {
+  try {
+    const sheet = await getSheet(file, sheetName)
+    if (!sheet) {
+      throw new Error(`Hoja ${sheetName} no encontrada.`)
+    }
+    const operationNumber = sheet[cellOperationNumber]?.v
+
+    const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
+    const colIndex = XLSX.utils.decode_col(columnName)
+
+    let concatenatedQueries = `use SCA_HIPOTEC\nGO\n`
+
+    for (
+      let rowIndex = columnRange.s.r;
+      rowIndex <= columnRange.e.r;
+      rowIndex++
+    ) {
+      const cellAddress: XLSX.CellAddress = { r: rowIndex, c: colIndex }
+      const cellRef = XLSX.utils.encode_cell(cellAddress)
+      const numCuota = sheet[cellRef]?.v
+
+      if (typeof numCuota === 'number') {
+        const fechVenc =
+          sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 1 })]?.v
+        const cuota =
+          sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 2 })]?.v
+        const amortizacion =
+          sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })]?.v
+        const intereses =
+          sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })]?.v
+        const seguros =
+          sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 5 })]?.v
+        const saldoInsoluto =
+          sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 6 })]?.v
+
+        const rowData = {
+          amortizacion,
+          intereses,
+          fechVenc,
+          seguros,
+          cuota,
+          saldoInsoluto,
+          operationNumber,
+          numCuota,
+        }
+
+        function createUpdateQueryLine(rowData: any) {
+          const fld_col_amor = Math.trunc(Math.round(rowData.amortizacion))
+          const fld_col_int = Math.trunc(Math.round(rowData.intereses))
+          const fld_col_fven = excelDateToFormattedDate(rowData.fechVenc)
+          const fld_col_segu = Math.trunc(Math.round(rowData.seguros))
+          const fld_col_cuo = Math.trunc(Math.round(rowData.cuota))
+          const fld_col_cuos = Math.trunc(
+            Math.round(rowData.cuota - rowData.seguros)
+          )
+
+          let fld_col_salc =
+            rowData.cuota > 0
+              ? Math.trunc(Math.round(rowData.cuota))
+              : rowData.saldoInsoluto
+
+          const fld_col_sal = Math.trunc(Math.round(rowData.saldoInsoluto))
+
+          const query = `Update col set fld_col_amor = ${fld_col_amor}, fld_col_int = ${fld_col_int}, fld_col_fven = '${fld_col_fven}', fld_col_segu = ${fld_col_segu}, fld_col_cuo = ${fld_col_cuo}, fld_col_cuos = ${fld_col_cuos}, fld_col_salc = case when fld_col_salc > 0 then ${fld_col_salc} else fld_col_salc end , fld_col_sal = ${fld_col_sal} where fld_col_oper = ${rowData.operationNumber} and fld_col_ncu = ${rowData.numCuota}`
+
+          return query
+        }
+
+        const query = createUpdateQueryLine(rowData)
+        concatenatedQueries += query + '\n'
+      }
+    }
+
+    return concatenatedQueries
+  } catch (error) {
+    alert(error)
+  }
+}
