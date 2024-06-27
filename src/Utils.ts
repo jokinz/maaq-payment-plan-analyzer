@@ -262,7 +262,7 @@ export const getColumnData = async (
 export const getSheetData = async (
   file: File,
   sheetName: string
-): Promise<any> => {
+): Promise<any[][] | undefined> => {
   try {
     const sheet = await getSheet(file, sheetName)
 
@@ -278,7 +278,7 @@ export const getSheetData = async (
     const data = sheetData.map((row) => row.map((cell) => ({ value: cell })))
     return data
   } catch (error) {
-    alert(error)
+    console.error(error)
   }
 }
 
