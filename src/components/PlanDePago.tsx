@@ -89,11 +89,11 @@ function PlanDePago() {
         if (sheetNames.includes(WEBPCF)) {
           setTargetSheet(WEBPCF)
           const sheetData = await getSheetData(file[0], WEBPCF)
-          setFileSheetData(sheetData)
+          sheetData && setFileSheetData(sheetData)
         } else {
           setTargetSheet(sheetNames[0])
           const sheetData = await getSheetData(file[0], sheetNames[0])
-          setFileSheetData(sheetData)
+          sheetData && setFileSheetData(sheetData)
         }
       })()
     } else {
@@ -102,12 +102,13 @@ function PlanDePago() {
       setFileSheetData(null)
     }
   }, [file])
+
   useEffect(() => {
     if (file && file.length > 0) {
       ;(async () => {
         if (targetSheet) {
           const sheetData = await getSheetData(file[0], targetSheet)
-          setFileSheetData(sheetData)
+          sheetData && setFileSheetData(sheetData)
         }
       })()
     }
@@ -200,24 +201,27 @@ function PlanDePago() {
   const validate = async () => {
     if (file && file.length > 0 && targetSheet) {
       try {
-        const readOperationNumber = await getCellValue(
+        const operationNumber = await getCellValue(
           file[0],
           targetSheet,
           cellOperationNumber
         )
-        setFileOperationNumber(readOperationNumber)
-        const readTotalCredit = await getCellValue(
+        typeof operationNumber === 'number' &&
+          setFileOperationNumber(operationNumber)
+        const totalCredit = await getCellValue(
           file[0],
           targetSheet,
           cellTotalCredit
         )
-        setFileTotalCredit(Math.trunc(readTotalCredit))
+        typeof totalCredit === 'number' &&
+          setFileTotalCredit(Math.trunc(totalCredit))
         const readPaymentsQuantity = await getLastCellValue(
           file[0],
           targetSheet,
           paymentNumberColumn
         )
-        setFilePaymentsQuantity(readPaymentsQuantity)
+        typeof readPaymentsQuantity === 'number' &&
+          setFilePaymentsQuantity(readPaymentsQuantity)
       } catch (error) {
         alert('Error reading file:' + error)
       }
@@ -465,7 +469,9 @@ function PlanDePago() {
             onClick={(event) => {
               event.preventDefault()
               try {
-                file && targetSheet && validateData(file[0], targetSheet, paymentNumberColumn)
+                file &&
+                  targetSheet &&
+                  validateData(file[0], targetSheet, paymentNumberColumn)
               } catch (error) {
                 alert(error)
               }
