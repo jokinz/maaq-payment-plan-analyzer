@@ -446,15 +446,15 @@ export const getLastCellValue = async (
   }
 }
 
-export const validateData = async (
+export const validateWebpcfData = async (
   file: File,
-  sheetName: string,
   columnName: string
 ): Promise<undefined> => {
+  const WEBPCF = 'WEBPCF'
   try {
-    const sheet = await getSheet(file, sheetName)
+    const sheet = await getSheet(file, WEBPCF)
     if (!sheet) {
-      throw new Error(`Hoja ${sheetName} no encontrada.`)
+      throw new Error(`Hoja ${WEBPCF} no encontrada.`)
     }
     const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
     const colIndex = XLSX.utils.decode_col(columnName)
@@ -475,17 +475,15 @@ export const validateData = async (
           const fechVenc =
             sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 1 })]?.v
           const siguienteFechVenc =
-            sheet[
-              XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 1 })
-            ]?.v
+            sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 1 })]
+              ?.v
           const cuota =
             sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 2 })]?.v
           const amortizacion =
             sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })]?.v
           const siguienteAmortizacion =
-            sheet[
-              XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 3 })
-            ]?.v
+            sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 3 })]
+              ?.v
           const intereses =
             sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })]?.v
           const seguros =
@@ -493,9 +491,8 @@ export const validateData = async (
           const saldoInsoluto =
             sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 6 })]?.v
           const siguienteSaldoInsoluto =
-            sheet[
-              XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 6 })
-            ]?.v
+            sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 6 })]
+              ?.v
 
           if (
             seguros + intereses + amortizacion - cuota !== 0 ||

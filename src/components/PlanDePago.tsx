@@ -383,7 +383,7 @@ function PlanDePago() {
               try {
                 file &&
                   targetSheet &&
-                  validateData(file[0], targetSheet, paymentNumberColumn)
+                  validateWebpcfData(file[0], paymentNumberColumn)
               } catch (error) {
                 alert(error)
               }
