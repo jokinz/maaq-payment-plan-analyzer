@@ -4,14 +4,16 @@ import '../App.css'
 
 import * as XLSX from 'xlsx'
 
+import { getDataQuery, paymentPlansBackupQuery, updateQuery } from '../Queries'
 import {
   excelDateToFormattedDate,
   getAllSheetNames,
   getCellValue,
+  getLastCellValue,
   getSheetData,
   readFile,
+  validateData
 } from '../Utils'
-import { getDataQuery, paymentPlansBackupQuery, updateQuery } from '../Queries'
 
 import FormField from '@/components/FormField'
 import Query from '@/components/Query'
@@ -28,12 +30,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Spreadsheet from 'react-spreadsheet'
 
-import Wrapper from './Wrapper'
 import BackUp from './BackUp'
+import Wrapper from './Wrapper'
 
 type Countries = 'colombia' | 'chile'
 type Currencies = 'peso' | 'usd'
@@ -111,103 +113,7 @@ function PlanDePago() {
     }
   }, [targetSheet])
 
-  const getLastCellValue = async (
-    file: File,
-    sheetName: string,
-    columnName: string
-  ): Promise<any> => {
-    try {
-      const workbook = await readFile(file)
-      const sheet = workbook.Sheets[sheetName]
-      const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
-      const colIndex = XLSX.utils.decode_col(columnName)
-
-      let lastCellValue
-
-      for (
-        let rowIndex = columnRange.s.r;
-        rowIndex <= columnRange.e.r;
-        rowIndex++
-      ) {
-        const cellAddress = { r: rowIndex, c: colIndex }
-        const cellRef = XLSX.utils.encode_cell(cellAddress)
-        const cellValue = sheet[cellRef]?.v
-
-        if (cellValue !== undefined && typeof cellValue === 'number') {
-          lastCellValue = cellValue
-        }
-      }
-      return lastCellValue
-    } catch (error) {
-      alert(error)
-    }
-  }
-
-  const validateData = async (
-    file: File,
-    sheetName: string,
-    columnName: string
-  ): Promise<any> => {
-    try {
-      const workbook = await readFile(file)
-      const sheet = workbook.Sheets[sheetName]
-      const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
-      const colIndex = XLSX.utils.decode_col(columnName)
-
-      let lastCellValue
-
-      for (
-        let rowIndex = columnRange.s.r;
-        rowIndex <= columnRange.e.r;
-        rowIndex++
-      ) {
-        const cellAddress = { r: rowIndex, c: colIndex }
-        const cellRef = XLSX.utils.encode_cell(cellAddress)
-        const numCuota = sheet[cellRef]?.v
-
-        if (numCuota !== undefined && typeof numCuota === 'number') {
-          const siguienteNumCuota =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex })]?.v
-          const fechVenc =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 1 })]?.v
-          const siguienteFechVenc =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 1 })]
-              ?.v
-          const cuota =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 2 })]?.v
-          const amortizacion =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })]?.v
-          const siguienteAmortizacion =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 3 })]
-              ?.v
-          const intereses =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })]?.v
-          const seguros =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 5 })]?.v
-          const saldoInsoluto =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 6 })]?.v
-          const siguienteSaldoInsoluto =
-            sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 6 })]
-              ?.v
-
-          if (
-            seguros + intereses + amortizacion - cuota !== 0 ||
-            saldoInsoluto - siguienteAmortizacion - siguienteSaldoInsoluto !==
-              0 ||
-            siguienteNumCuota - numCuota !== 1 ||
-            siguienteFechVenc - fechVenc < 28 ||
-            siguienteFechVenc - fechVenc > 31
-          ) {
-            alert(`Error de validación en cuota N°: ${numCuota}`)
-          }
-        }
-      }
-      return lastCellValue
-    } catch (error) {
-      alert(error)
-    }
-  }
-
+  
   const createUpdateQueries = async (
     file: File,
     sheetName: string,
