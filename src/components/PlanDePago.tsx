@@ -2,17 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 
 import '../App.css'
 
-import * as XLSX from 'xlsx'
 
 import { getDataQuery, paymentPlansBackupQuery, updateQuery } from '../Queries'
 import {
-  excelDateToFormattedDate,
+  createUpdateQueries,
   getAllSheetNames,
   getCellValue,
   getLastCellValue,
   getSheetData,
-  readFile,
-  validateData
+  validateWebpcfData
 } from '../Utils'
 
 import FormField from '@/components/FormField'
@@ -44,8 +42,6 @@ function PlanDePago() {
   const [country, setCountry] = useState<Countries>('colombia')
   const [currency, setCurrency] = useState<Currencies>('peso')
 
-  // const cellOperationNumber: string = country === 'colombia' ? 'C4' : 'C1'
-  // const cellTotalCredit: string = country === 'colombia' ? 'H8' : 'H5'
   const [cellOperationNumber, setCellOperationNumber] = useState<string>('C4')
   const [cellTotalCredit, setCellTotalCredit] = useState<string>('H8')
   const [updatingCellOperationNumber, setUpdatingCellOperationNumber] =
