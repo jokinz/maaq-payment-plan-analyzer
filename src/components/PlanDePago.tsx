@@ -431,7 +431,7 @@ function PlanDePago() {
                 const updateQueries = await createUpdateQueries(
                   file[0],
                   targetSheet,
-                  paymentNumberColumn
+                  paymentNumberColumn, cellOperationNumber
                 )
                 setQuery2(updateQueries)
               }
