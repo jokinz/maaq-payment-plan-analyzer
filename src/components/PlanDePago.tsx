@@ -9,7 +9,7 @@ import {
   getAllSheetNames,
   getCellValue,
   getLastCellValue,
-  getSheetData,
+  getAllContentFromSheet,
   validateWebpcfData
 } from '../Utils'
 
@@ -84,11 +84,11 @@ function PlanDePago() {
         setSheetsList(sheetNames)
         if (sheetNames.includes(WEBPCF)) {
           setTargetSheet(WEBPCF)
-          const sheetData = await getSheetData(file[0], WEBPCF)
+          const sheetData = await getAllContentFromSheet(file[0], WEBPCF)
           sheetData && setFileSheetData(sheetData)
         } else {
           setTargetSheet(sheetNames[0])
-          const sheetData = await getSheetData(file[0], sheetNames[0])
+          const sheetData = await getAllContentFromSheet(file[0], sheetNames[0])
           sheetData && setFileSheetData(sheetData)
         }
       })()
@@ -103,7 +103,7 @@ function PlanDePago() {
     if (file && file.length > 0) {
       ;(async () => {
         if (targetSheet) {
-          const sheetData = await getSheetData(file[0], targetSheet)
+          const sheetData = await getAllContentFromSheet(file[0], targetSheet)
           sheetData && setFileSheetData(sheetData)
         }
       })()

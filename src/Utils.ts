@@ -259,7 +259,7 @@ export const getColumnData = async (
   return []
 }
 
-export const getSheetData = async (
+export const getAllContentFromSheet = async (
   file: File,
   sheetName: string
 ): Promise<any[][] | undefined> => {
