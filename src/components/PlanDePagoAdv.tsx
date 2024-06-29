@@ -19,6 +19,7 @@ import Sheet, { sheetProps } from './Sheet'
 import FormField from './FormField'
 import { LoadingSpinner } from './LoadingSpinner'
 import { Button } from './ui/button'
+import PlanDePagoDetalles from './PlanDePagoDetalles'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 
@@ -399,6 +400,13 @@ const PlanDePagoAdv = () => {
           )}
         </>
       )}
+      {file &&
+        file.length > 0 &&
+        Array.from(file).map((file, index) => {
+          return (
+            <PlanDePagoDetalles key={index} file={file}></PlanDePagoDetalles>
+          )
+        })}
     </Wrapper>
   )
 }
