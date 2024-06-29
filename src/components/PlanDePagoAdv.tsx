@@ -33,6 +33,7 @@ const PlanDePagoAdv = () => {
             ref={fileRef}
             type="file"
             accept=".xls, .xlsm, .xlsx"
+            multiple
             onChange={(event) => setFile(event.currentTarget.files)}
           />
         </div>
