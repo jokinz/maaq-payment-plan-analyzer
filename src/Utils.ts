@@ -117,14 +117,9 @@ export const getAllSheetsProps = async (
 export const getSheetsProps = async (
   file: File,
   sheetNames: string[]
-): Promise<any> => {
-  const webpcf = 'WEBPCF'
+): Promise<any[]> => {
   try {
     const workbook = await readFile(file)
-    let result: Pick<
-      sheetProps,
-      'name' | 'checked' | 'paymentsQuantity' | 'type'
-    >[] = []
     let result: PartialSheetProps[] = []
     for (const sheetName in sheetNames) {
       const sheet = workbook.Sheets[sheetNames[sheetName]]
@@ -327,7 +322,6 @@ export const getColumnNames = async (file: File): Promise<string[]> => {
 
     return values
   } catch (error) {
-    alert(error)
     console.error(error)
     return []
   }
