@@ -280,7 +280,7 @@ export const getAllContentFromSheet = async (
 export const getColumnNames = async (file: File): Promise<string[]> => {
   try {
     const workbook = await readFile(file)
-    const sheet = workbook.Sheets[0]
+    const sheet = workbook.Sheets[workbook.SheetNames[0]]
 
     const range = XLSX.utils.decode_range(sheet['!ref'] || '')
     let found = false
