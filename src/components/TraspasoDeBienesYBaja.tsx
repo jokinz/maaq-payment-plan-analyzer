@@ -52,6 +52,7 @@ function TraspasoDeBienesYBaja() {
   const restartValues = () => {
     setSourceOperation(0)
     setTargetOperation(0)
+    setSelectedStatus('')
     window.scrollTo({
       top: 0,
       behavior: 'smooth',
