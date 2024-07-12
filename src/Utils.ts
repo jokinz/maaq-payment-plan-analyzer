@@ -456,6 +456,7 @@ export const validateWebpcfData = async (
     }
     const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
     const colIndex = XLSX.utils.decode_col(columnName)
+    const paymentErrorList: number[] = []
 
     for (
       let rowIndex = columnRange.s.r;
@@ -500,10 +501,19 @@ export const validateWebpcfData = async (
             siguienteFechVenc - fechVenc < 28 ||
             siguienteFechVenc - fechVenc > 31
           ) {
-            alert(`Error de validación en cuota N°: ${numCuota}`)
+            paymentErrorList.push(numCuota)
           }
         }
       }
+    }
+    if (paymentErrorList.length > 0) {
+      let errorMessage = ''
+      paymentErrorList.forEach((payment) => {
+        errorMessage += `Error de validación en cuota N°: ${payment}\n`
+      })
+      alert(errorMessage)
+    } else {
+      alert(`Sin errores encontrados en los montos`)
     }
     return
   } catch (error) {
