@@ -46,7 +46,10 @@ export const getSheet = async (
   try {
     const workbook = await readFile(file)
     const sheet = workbook.Sheets[sheetName]
-    return sheet
+    if (sheet) {
+      return sheet
+    }
+    throw new Error(`Hoja ${sheetName} no encontrada`)
   } catch (error) {
     console.error(error)
   }
@@ -189,14 +192,15 @@ export const getCellValue = async (
   cellReference: string
 ): Promise<string | number | boolean | Date | undefined> => {
   try {
-    const cellObject = await getCellObject(file, sheetName, cellReference)
-    if (cellObject) {
-      if (cellObject.hasOwnProperty('v')) {
+    const sheet = await getSheet(file, sheetName)
+    if (sheet) {
+      const cellObject = await getCellObject(file, sheetName, cellReference)
+      if (cellObject && cellObject.hasOwnProperty('v')) {
         const cellValue = cellObject.v
         return cellValue
-      } else {
-        throw new Error(`Valor no encontrado en ${cellReference}`)
       }
+    } else {
+      throw new Error(`Valor no encontrado en ${cellReference}`)
     }
   } catch (error) {
     console.error(error)
