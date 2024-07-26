@@ -77,7 +77,7 @@ export const unityInsertQuery = (
     saldo = 0
   }
   const formatNumber = (value: number): string => {
-    const stringedTruncedNumber = Math.trunc(value).toString()
+    const stringedTruncedNumber = Math.round(value).toString()
     if (stringedTruncedNumber.length >= 6) {
       return `${stringedTruncedNumber}\t`
     }
