@@ -206,19 +206,20 @@ const PlanDePagoDetalles = ({ file }: props) => {
                 })
               ].v
             : 0
-          const cuota = sheet[
-            XLSX.utils.encode_cell({
-              r: rowIndex,
-              c: sheetData.cuota.index.colIndex,
-            })
-          ]?.v
-            ? sheet[
-                XLSX.utils.encode_cell({
-                  r: rowIndex,
-                  c: sheetData.cuota.index.colIndex,
-                })
-              ].v
-            : 0
+          // const cuota = sheet[
+          //   XLSX.utils.encode_cell({
+          //     r: rowIndex,
+          //     c: sheetData.cuota.index.colIndex,
+          //   })
+          // ]?.v
+          //   ? sheet[
+          //       XLSX.utils.encode_cell({
+          //         r: rowIndex,
+          //         c: sheetData.cuota.index.colIndex,
+          //       })
+          //     ].v
+          //   : 0
+          const cuota = intereses + capital
 
           const rowData: queryData = {
             tipo,
