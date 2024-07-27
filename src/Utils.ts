@@ -86,6 +86,10 @@ type PartialSheetProps = Pick<
   sheetProps,
   'name' | 'type' | 'checked' | 'paymentsQuantity'
 >
+type PartialSheetProps2 = Pick<
+  sheetProps,
+  'name' | 'type' | 'checked' | 'paymentsQuantity' | 'paymentsQuoted'
+>
 
 export const getAllSheetsProps = async (
   file: File
@@ -119,24 +123,31 @@ export const getAllSheetsProps = async (
 
 export const getSheetsProps = async (
   file: File,
-  sheetNames: string[]
+  sheetsNameAndRows: {
+    sheetName: string
+    cellRows: number[]
+  }[]
 ): Promise<any[]> => {
   try {
     const workbook = await readFile(file)
-    let result: PartialSheetProps[] = []
-    for (const sheetName in sheetNames) {
-      const sheet = workbook.Sheets[sheetNames[sheetName]]
+    let result: PartialSheetProps2[] = []
+    sheetsNameAndRows.forEach((item) => {
+      const sheet = workbook.Sheets[item.sheetName]
       const paymentsQuantity: number = getPaymentsQuantity(sheet)
+      const paymentsQuoted = sheetsNameAndRows.find(
+        (elem) => elem.sheetName === item.sheetName
+      )?.cellRows as number[]
       result = [
         ...result,
         {
-          name: sheetNames[sheetName],
+          name: item.sheetName,
           checked: true,
           paymentsQuantity,
+          paymentsQuoted,
           type: 0,
         },
       ]
-    }
+    })
     return result
   } catch (error) {
     console.error(error)
@@ -392,6 +403,106 @@ export const getColumnFormulas = async (
   }
 
   return formulas
+}
+
+export type CellInfo = {
+  sheetName: string
+  cellRow: number
+}
+
+const extractCellReferences = (formula: string): CellInfo[] => {
+  const regex = /(?:'([^']+)'|([A-Za-z_][\w]*))!([A-Z]+)(\d+)/g
+  let match
+  const cellInfoArray: CellInfo[] = []
+
+  while ((match = regex.exec(formula)) !== null) {
+    const sheetName = match[1] || match[2]
+    const column = match[3]
+    const row = parseInt(match[4], 10)
+    const decodedCell = XLSX.utils.decode_cell(column + row)
+    cellInfoArray.push({
+      sheetName,
+      cellRow: decodedCell.r,
+    })
+  }
+
+  return cellInfoArray
+}
+
+export const getCellReferences = async (
+  file: File,
+  sheetName: string,
+  cellReference: string
+): Promise<CellInfo[] | undefined> => {
+  try {
+    const sheet = await getSheet(file, sheetName)
+
+    if (!sheet) {
+      throw new Error(`Hoja ${sheetName} no encontrada.`)
+    }
+
+    const startCell = XLSX.utils.decode_cell(cellReference)
+    const column = startCell.c
+
+    let row = startCell.r
+    let cellAddress = XLSX.utils.encode_cell({ r: row, c: column })
+    let cell: XLSX.CellObject = sheet[cellAddress]
+
+    const allReferences: CellInfo[] = []
+
+    while (cell) {
+      if (cell.f && cell.t === 'n') {
+        const references = extractCellReferences(cell.f)
+        allReferences.push(...references)
+      }
+      row++
+      cellAddress = XLSX.utils.encode_cell({ r: row, c: column })
+      cell = sheet[cellAddress]
+    }
+
+    return allReferences
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+export const mergeAndRemoveDuplicates = (
+  arr1: CellInfo[],
+  arr2: CellInfo[]
+): CellInfo[] => {
+  const map = new Map<string, CellInfo>()
+
+  const addToMap = (arr: CellInfo[]) => {
+    arr.forEach((cell) => {
+      const key = `${cell.sheetName}-${cell.cellRow}`
+      if (!map.has(key)) {
+        map.set(key, cell)
+      }
+    })
+  }
+
+  addToMap(arr1)
+  addToMap(arr2)
+
+  return Array.from(map.values())
+}
+
+export type sheetPaymentsQuoted = { sheetName: string; cellRows: number[] }
+
+export const groupBySheetName = (cells: CellInfo[]): sheetPaymentsQuoted[] => {
+  const sheetMap = new Map<string, Set<number>>()
+
+  cells.forEach((cell) => {
+    if (!sheetMap.has(cell.sheetName)) {
+      sheetMap.set(cell.sheetName, new Set<number>())
+    }
+    sheetMap.get(cell.sheetName)?.add(cell.cellRow)
+  })
+
+  return Array.from(sheetMap.entries()).map(([sheetName, cellRowsSet]) => ({
+    sheetName,
+    cellRows: Array.from(cellRowsSet),
+  }))
 }
 
 export const extractSheetNamesFromFormula = (formula: string): string[] => {

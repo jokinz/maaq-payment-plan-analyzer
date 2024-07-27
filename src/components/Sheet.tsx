@@ -15,6 +15,7 @@ export type sheetProps = {
   name: string
   checked: boolean
   paymentsQuantity: number
+  paymentsQuoted: number[]
   updateSheetChecked: (index: number) => void
   type: number
   updateSheetType: (index: number, type: number) => void
@@ -25,6 +26,7 @@ const Sheet = ({
   name,
   checked,
   paymentsQuantity,
+  paymentsQuoted,
   updateSheetChecked,
   updateSheetType,
   type,
@@ -57,7 +59,9 @@ const Sheet = ({
         </SelectContent>
       </Select>
       <Label htmlFor={name}>
-        {name} [{paymentsQuantity}]
+        {name} <br />
+        Total: [{paymentsQuantity}] <br />
+        En uso: [{paymentsQuoted.length}]
       </Label>
       <FormField
         htmlFor="starterCell"

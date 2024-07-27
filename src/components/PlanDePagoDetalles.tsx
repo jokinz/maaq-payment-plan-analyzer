@@ -2,20 +2,23 @@ import { useState } from 'react'
 
 import * as XLSX from 'xlsx'
 
+import { LoadingSpinner } from './LoadingSpinner'
+import { queryData } from './PlanDePagoAdv'
 import Query from './Query'
 import Sheet, { sheetProps } from './Sheet'
-import { queryData } from './PlanDePagoAdv'
-import { LoadingSpinner } from './LoadingSpinner'
 
 import { Button } from './ui/button'
 
 import {
   extractSheetNamesFromFormula,
   findIndexInRange,
+  getCellReferences,
   getCellValue,
   getColumnFormulas,
   getSheet,
   getSheetsProps,
+  groupBySheetName,
+  mergeAndRemoveDuplicates,
 } from '@/Utils'
 
 import { unityInsertQuery } from '@/Queries'
@@ -57,7 +60,8 @@ const PlanDePagoDetalles = ({ file }: props) => {
     file: File,
     sheetName: string,
     tipo: number,
-    searchRange: string = 'A25:J28'
+    paymentsQuoted: number[],
+    searchRange: string = 'A21:J28'
   ): Promise<queryData[]> => {
     try {
       let sheetData: {
@@ -160,15 +164,12 @@ const PlanDePagoDetalles = ({ file }: props) => {
       const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
       let data: queryData[] = []
 
-      for (
-        let rowIndex = columnRange.s.r;
-        rowIndex <= columnRange.e.r;
-        rowIndex++
-      ) {
+      const orderedPaymentsQuotedIndexes = paymentsQuoted.sort()
+      orderedPaymentsQuotedIndexes.forEach((rowIndex) => {
         const cellAddress: {
           r: number
           c: number
-        } = { r: rowIndex, c: sheetData.periodo.index.colIndex }
+        } = { r: rowIndex, c: periodoIndex.colIndex }
         const cellRef = XLSX.utils.encode_cell(cellAddress)
         const nroCuota = sheet[cellRef]?.v
         if (typeof nroCuota === 'number') {
@@ -176,49 +177,36 @@ const PlanDePagoDetalles = ({ file }: props) => {
             sheet[
               XLSX.utils.encode_cell({
                 r: rowIndex,
-                c: sheetData.fecha.index.colIndex,
+                c: fechaIndex.colIndex,
               })
             ]?.v
           const saldo =
             sheet[
               XLSX.utils.encode_cell({
                 r: rowIndex,
-                c: sheetData.saldo.index.colIndex,
+                c: saldoIndex.colIndex,
               })
             ]?.v
           const intereses =
             sheet[
               XLSX.utils.encode_cell({
                 r: rowIndex,
-                c: sheetData.intereses.index.colIndex,
+                c: interesesIndex.colIndex,
               })
             ]?.v
           const capital = sheet[
             XLSX.utils.encode_cell({
               r: rowIndex,
-              c: sheetData.capital.index.colIndex,
+              c: capitalIndex.colIndex,
             })
           ]?.v
             ? sheet[
                 XLSX.utils.encode_cell({
                   r: rowIndex,
-                  c: sheetData.capital.index.colIndex,
+                  c: capitalIndex.colIndex,
                 })
               ].v
             : 0
-          // const cuota = sheet[
-          //   XLSX.utils.encode_cell({
-          //     r: rowIndex,
-          //     c: sheetData.cuota.index.colIndex,
-          //   })
-          // ]?.v
-          //   ? sheet[
-          //       XLSX.utils.encode_cell({
-          //         r: rowIndex,
-          //         c: sheetData.cuota.index.colIndex,
-          //       })
-          //     ].v
-          //   : 0
           const cuota = intereses + capital
 
           const rowData: queryData = {
@@ -232,7 +220,80 @@ const PlanDePagoDetalles = ({ file }: props) => {
           }
           data = [...data, rowData]
         }
-      }
+      })
+      // for (
+      //   let rowIndex = columnRange.s.r;
+      //   rowIndex <= columnRange.e.r;
+      //   rowIndex++
+      // ) {
+      //   const cellAddress: {
+      //     r: number
+      //     c: number
+      //   } = { r: rowIndex, c: sheetData.periodo.index.colIndex }
+      //   const cellRef = XLSX.utils.encode_cell(cellAddress)
+      //   const nroCuota = sheet[cellRef]?.v
+      //   if (typeof nroCuota === 'number') {
+      //     const fecha =
+      //       sheet[
+      //         XLSX.utils.encode_cell({
+      //           r: rowIndex,
+      //           c: sheetData.fecha.index.colIndex,
+      //         })
+      //       ]?.v
+      //     const saldo =
+      //       sheet[
+      //         XLSX.utils.encode_cell({
+      //           r: rowIndex,
+      //           c: sheetData.saldo.index.colIndex,
+      //         })
+      //       ]?.v
+      //     const intereses =
+      //       sheet[
+      //         XLSX.utils.encode_cell({
+      //           r: rowIndex,
+      //           c: sheetData.intereses.index.colIndex,
+      //         })
+      //       ]?.v
+      //     const capital = sheet[
+      //       XLSX.utils.encode_cell({
+      //         r: rowIndex,
+      //         c: sheetData.capital.index.colIndex,
+      //       })
+      //     ]?.v
+      //       ? sheet[
+      //           XLSX.utils.encode_cell({
+      //             r: rowIndex,
+      //             c: sheetData.capital.index.colIndex,
+      //           })
+      //         ].v
+      //       : 0
+      //     // const cuota = sheet[
+      //     //   XLSX.utils.encode_cell({
+      //     //     r: rowIndex,
+      //     //     c: sheetData.cuota.index.colIndex,
+      //     //   })
+      //     // ]?.v
+      //     //   ? sheet[
+      //     //       XLSX.utils.encode_cell({
+      //     //         r: rowIndex,
+      //     //         c: sheetData.cuota.index.colIndex,
+      //     //       })
+      //     //     ].v
+      //     //   : 0
+      //     const cuota = intereses + capital
+
+      //     const rowData: queryData = {
+      //       tipo,
+      //       nroCuota,
+      //       fecha,
+      //       cuota,
+      //       capital,
+      //       intereses,
+      //       saldo,
+      //     }
+      //     data = [...data, rowData]
+      //   }
+      // }
       if (data[0].nroCuota === 0 && data[1].nroCuota === 0) {
         data.shift()
       }
@@ -261,10 +322,16 @@ const PlanDePagoDetalles = ({ file }: props) => {
     const selectedSheets = sheetList
       .filter((sheet) => sheet.checked)
       .map((sheet) => {
-        return { name: sheet.name, type: sheet.type }
+        return {
+          name: sheet.name,
+          type: sheet.type,
+          paymentsQuoted: sheet.paymentsQuoted,
+        }
       })
     for (const sheet of selectedSheets) {
-      const sheetData = await getSheetData(file, sheet.name, sheet.type)
+      const sheetData = await (
+        await getSheetData(file, sheet.name, sheet.type, sheet.paymentsQuoted)
+      ).sort((a, b) => a.nroCuota - b.nroCuota)
       result += `---${sheet.name}---\n`
       result += createSheetQueries(sheetData)
     }
@@ -325,11 +392,24 @@ const PlanDePagoDetalles = ({ file }: props) => {
           ]),
         ]
         setWebpfcFunctionsList(sheetsInFormulas)
-        const sheetProps = await getSheetsProps(
+
+        const amortizacionCellInfo = await getCellReferences(
           file,
-          sheetsInAmortizacionFormulas
+          webpcf,
+          AmortizacionFirstCellLocation
         )
-        setSheetsList(sheetProps)
+        const interesesCellInfo = await getCellReferences(
+          file,
+          webpcf,
+          InteresesFirstCellLocation
+        )
+        if (amortizacionCellInfo && interesesCellInfo) {
+          const data = groupBySheetName(
+            mergeAndRemoveDuplicates(amortizacionCellInfo, interesesCellInfo)
+          )
+          const sheetProps = await getSheetsProps(file, data)
+          setSheetsList(sheetProps)
+        }
       } else {
         throw new Error('Ninguna fórmula encontrada')
       }
@@ -384,6 +464,7 @@ const PlanDePagoDetalles = ({ file }: props) => {
                     checked={sheet.checked}
                     type={sheet.type}
                     paymentsQuantity={sheet.paymentsQuantity}
+                    paymentsQuoted={sheet.paymentsQuoted}
                     updateSheetChecked={updateSheetChecked}
                     updateSheetType={updateSheetType}
                   />
