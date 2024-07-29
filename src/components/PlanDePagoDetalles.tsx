@@ -22,6 +22,9 @@ import {
 } from '@/Utils'
 
 import { unityInsertQuery } from '@/Queries'
+import { Input } from './ui/input'
+import { Checkbox } from './ui/checkbox'
+import { Label } from './ui/label'
 
 type props = {
   file: File
@@ -39,6 +42,7 @@ const PlanDePagoDetalles = ({ file }: props) => {
   const [operationNumber, setOperationNumber] = useState<number>(0)
   const [sheetsList, setSheetsList] = useState<sheetProps[]>([])
   const [insertQueries, setInsertQueries] = useState<string>('')
+  const [deleteOperation, setDeleteOperation] = useState<boolean>(false)
 
   const [webpfcFunctionsList, setWebpfcFunctionsList] = useState<string[]>([])
 
@@ -318,7 +322,11 @@ const PlanDePagoDetalles = ({ file }: props) => {
       webpcf,
       cellOperationNumber
     )
-    let result: string = `--------OP ${operationNumber}--------\n`
+    let result: string = `${
+      deleteOperation
+        ? `delete from PAYMENTS_PLAN_SFCO where operacion = ${operationNumber}\n`
+        : ''
+    }--------OP ${operationNumber}--------\n`
     const selectedSheets = sheetList
       .filter((sheet) => sheet.checked)
       .map((sheet) => {
@@ -469,6 +477,19 @@ const PlanDePagoDetalles = ({ file }: props) => {
                     updateSheetType={updateSheetType}
                   />
                 ))}
+              <div className="text-left">
+                <Checkbox
+                  id="deleteOperation"
+                  checked={deleteOperation}
+                  onClick={() => {
+                    setDeleteOperation((prev) => !prev)
+                  }}
+                />
+                <Label htmlFor="deleteOperation">
+                  Eliminar data de PAYMENTS_PLAN_SFCO
+                </Label>
+              </div>
+
               <Button
                 disabled={checkIfSelectedSheetsMissType(sheetsList)}
                 onClick={() => createInsertQueries(file, sheetsList)}
