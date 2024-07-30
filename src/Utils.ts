@@ -411,11 +411,13 @@ export type CellInfo = {
 }
 
 const extractCellReferences = (formula: string): CellInfo[] => {
+  const cleanedFormula = formula.replace(/([A-Z]+):([A-Z]+),/g, '')
+
   const regex = /(?:'([^']+)'|([A-Za-z_][\w]*))!([A-Z]+)(\d+)/g
   let match
   const cellInfoArray: CellInfo[] = []
 
-  while ((match = regex.exec(formula)) !== null) {
+  while ((match = regex.exec(cleanedFormula)) !== null) {
     const sheetName = match[1] || match[2]
     const column = match[3]
     const row = parseInt(match[4], 10)
@@ -428,6 +430,7 @@ const extractCellReferences = (formula: string): CellInfo[] => {
 
   return cellInfoArray
 }
+
 
 export const getCellReferences = async (
   file: File,
