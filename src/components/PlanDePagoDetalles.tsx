@@ -12,17 +12,16 @@ import { Button } from './ui/button'
 import {
   extractSheetNamesFromFormula,
   findIndexInRange,
-  getCellReferences,
-  getCellValue,
-  getColumnFormulas,
+  getCellValueFromWorkbook,
+  getColumnFormulasFromWebpcf,
   getSheet,
   getSheetsProps,
-  groupBySheetName,
-  mergeAndRemoveDuplicates,
+  getWebpcfReferences,
+  readFile,
+  WebpcfReferences,
 } from '@/Utils'
 
 import { unityInsertQuery } from '@/Queries'
-import { Input } from './ui/input'
 import { Checkbox } from './ui/checkbox'
 import { Label } from './ui/label'
 
@@ -30,7 +29,7 @@ type props = {
   file: File
 }
 
-const webpcf: string = 'WEBPCF'
+const WEBPCF: string = 'WEBPCF'
 const cellOperationNumber: string = 'C4'
 const AmortizacionFirstCellLocation = 'E10'
 const InteresesFirstCellLocation = 'F10'
@@ -50,6 +49,10 @@ const PlanDePagoDetalles = ({ file }: props) => {
     string[]
   >([])
   const [interesesFunctionList, setInteresesFunctionList] = useState<string[]>(
+    []
+  )
+
+  const [webpcfReferences, setWebpcfReferences] = useState<WebpcfReferences[]>(
     []
   )
 
@@ -211,13 +214,11 @@ const PlanDePagoDetalles = ({ file }: props) => {
                 })
               ].v
             : 0
-          const cuota = intereses + capital
 
           const rowData: queryData = {
             tipo,
             nroCuota,
             fecha,
-            cuota,
             capital,
             intereses,
             saldo,
@@ -310,36 +311,42 @@ const PlanDePagoDetalles = ({ file }: props) => {
 
   const createSheetQueries = (queryData: queryData[]) => {
     let result: string = ''
-    queryData.forEach((data) => {
-      result += unityInsertQuery(operationNumber, data)
+    queryData.forEach((item) => {
+      result += unityInsertQuery(operationNumber, item)
     })
     return result
   }
 
-  const createInsertQueries = async (file: File, sheetList: sheetProps[]) => {
-    const operationNumber = await getCellValue(
-      file,
-      webpcf,
-      cellOperationNumber
-    )
+  const createInsertQueries = (sheetList: sheetProps[]) => {
     let result: string = `${
       deleteOperation
         ? `delete from PAYMENTS_PLAN_SFCO where operacion = ${operationNumber}\n`
         : ''
     }--------OP ${operationNumber}--------\n`
-    const selectedSheets = sheetList
-      .filter((sheet) => sheet.checked)
-      .map((sheet) => {
+    const selectedSheets = sheetList.filter((sheet) => sheet.checked)
+    for (const sheet of selectedSheets) {
+      const sheetData = webpcfReferences.map((item) => {
+        const amortizacion = item.amortizacion.filter(
+          (e) => e.sheetName === sheet.name
+        )
+        const intereses = item.intereses.filter(
+          (e) => e.sheetName === sheet.name
+        )
+
+        let sumAmortizacion = 0
+        amortizacion.forEach((item) => (sumAmortizacion += item.value))
+        let sumIntereses = 0
+        intereses.forEach((item) => (sumIntereses += item.value))
+
         return {
-          name: sheet.name,
-          type: sheet.type,
-          paymentsQuoted: sheet.paymentsQuoted,
+          fecha: item.date,
+          nroCuota: item.paymentNumber,
+          capital: sumAmortizacion,
+          intereses: sumIntereses,
+          tipo: sheet.type,
+          saldo: item.saldoInsoluto,
         }
       })
-    for (const sheet of selectedSheets) {
-      const sheetData = await (
-        await getSheetData(file, sheet.name, sheet.type, sheet.paymentsQuoted)
-      ).sort((a, b) => a.nroCuota - b.nroCuota)
       result += `---${sheet.name}---\n`
       result += createSheetQueries(sheetData)
     }
@@ -349,9 +356,10 @@ const PlanDePagoDetalles = ({ file }: props) => {
   const getData = async (file: File) => {
     setLoading(true)
     try {
-      const operationNumber = await getCellValue(
-        file,
-        webpcf,
+      const workbook = await readFile(file)
+      const operationNumber = getCellValueFromWorkbook(
+        workbook,
+        WEBPCF,
         cellOperationNumber
       )
       if (typeof operationNumber !== 'number') {
@@ -359,14 +367,13 @@ const PlanDePagoDetalles = ({ file }: props) => {
       } else {
         setOperationNumber(operationNumber)
       }
-      const formulasListAmortizacion = await getColumnFormulas(
-        file,
-        webpcf,
+
+      const formulasListAmortizacion = getColumnFormulasFromWebpcf(
+        workbook,
         AmortizacionFirstCellLocation
       )
-      const formulasListIntereses = await getColumnFormulas(
-        file,
-        webpcf,
+      const formulasListIntereses = getColumnFormulasFromWebpcf(
+        workbook,
         InteresesFirstCellLocation
       )
       let sheetsInAmortizacionFormulas: string[] = []
@@ -400,26 +407,31 @@ const PlanDePagoDetalles = ({ file }: props) => {
           ]),
         ]
         setWebpfcFunctionsList(sheetsInFormulas)
-
-        const amortizacionCellInfo = await getCellReferences(
-          file,
-          webpcf,
-          AmortizacionFirstCellLocation
-        )
-        const interesesCellInfo = await getCellReferences(
-          file,
-          webpcf,
-          InteresesFirstCellLocation
-        )
-        if (amortizacionCellInfo && interesesCellInfo) {
-          const data = groupBySheetName(
-            mergeAndRemoveDuplicates(amortizacionCellInfo, interesesCellInfo)
-          )
-          const sheetProps = await getSheetsProps(file, data)
-          setSheetsList(sheetProps)
-        }
       } else {
         throw new Error('Ninguna fórmula encontrada')
+      }
+
+      const references = getWebpcfReferences(
+        workbook,
+        AmortizacionFirstCellLocation
+      )
+      if (references.length > 0) {
+        setWebpcfReferences(references)
+        const sheetProps = getSheetsProps(workbook, references)
+        const newSheetsList = sheetProps.map((sheetProp, index) => {
+          return {
+            name: sheetProp.name,
+            index,
+            checked: sheetProp.checked,
+            paymentsQuantity: sheetProp.paymentsQuantity,
+            type: sheetProp.type,
+            amortizacionInUse: sheetProp.amortizacionInUse,
+            interesesInUse: sheetProp.interesesInUse,
+            updateSheetChecked,
+            updateSheetType,
+          }
+        })
+        setSheetsList(newSheetsList)
       }
     } catch (error) {
       setWebpfcFunctionsList([])
@@ -472,7 +484,8 @@ const PlanDePagoDetalles = ({ file }: props) => {
                     checked={sheet.checked}
                     type={sheet.type}
                     paymentsQuantity={sheet.paymentsQuantity}
-                    paymentsQuoted={sheet.paymentsQuoted}
+                    amortizacionInUse={sheet.amortizacionInUse}
+                    interesesInUse={sheet.interesesInUse}
                     updateSheetChecked={updateSheetChecked}
                     updateSheetType={updateSheetType}
                   />
@@ -492,7 +505,7 @@ const PlanDePagoDetalles = ({ file }: props) => {
 
               <Button
                 disabled={checkIfSelectedSheetsMissType(sheetsList)}
-                onClick={() => createInsertQueries(file, sheetsList)}
+                onClick={() => createInsertQueries(sheetsList)}
               >
                 Crear queries
               </Button>

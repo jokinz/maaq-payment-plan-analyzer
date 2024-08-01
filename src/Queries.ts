@@ -67,8 +67,9 @@ export const updateQuery = (operationNumber: number): string => {
 
 export const unityInsertQuery = (
   operationNumber: number,
-  { tipo, nroCuota, fecha, cuota, capital, intereses, saldo }: queryData
+  { tipo, nroCuota, fecha, capital, intereses, saldo }: queryData
 ): string => {
+  const cuota = intereses + capital
   const formattedDate: string = excelDateToFormattedDate(fecha)
   if (intereses === undefined) {
     intereses = 0

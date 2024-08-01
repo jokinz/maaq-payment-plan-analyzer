@@ -1,6 +1,8 @@
 import * as XLSX from 'xlsx'
 import { sheetProps } from './components/Sheet'
 
+const WEBPCF: string = 'WEBPCF'
+
 export const excelDateToFormattedDate = (excelSerialDate: number): string => {
   const excelEpoch = new Date('1899-12-31T00:00:00.000Z')
   const excelDate = new Date(
@@ -84,69 +86,60 @@ export const getAllSheetNames = async (file: File): Promise<string[]> => {
 
 type PartialSheetProps = Pick<
   sheetProps,
-  'name' | 'type' | 'checked' | 'paymentsQuantity'
->
-type PartialSheetProps2 = Pick<
-  sheetProps,
-  'name' | 'type' | 'checked' | 'paymentsQuantity' | 'paymentsQuoted'
+  | 'name'
+  | 'type'
+  | 'checked'
+  | 'paymentsQuantity'
+  | 'amortizacionInUse'
+  | 'interesesInUse'
 >
 
-export const getAllSheetsProps = async (
-  file: File
-): Promise<PartialSheetProps[]> => {
-  const webpcf = 'WEBPCF'
-  const cellAddress = 'E10'
+export const getSheetsProps = (
+  workbook: XLSX.WorkBook,
+  references: WebpcfReferences[]
+): PartialSheetProps[] => {
   try {
-    const workbook = await readFile(file)
-    const sheetNames = workbook.SheetNames
     let result: PartialSheetProps[] = []
-    for (const sheetName in sheetNames) {
-      const checked: boolean = (await cellFunctionContainsSheetName(
-        file,
-        webpcf,
-        cellAddress,
-        sheetNames[sheetName]
-      )) as boolean
-      const sheet = workbook.Sheets[sheetNames[sheetName]]
-      const paymentsQuantity: number = getPaymentsQuantity(sheet)
-      result = [
-        ...result,
-        { name: sheetNames[sheetName], checked, paymentsQuantity, type: 0 },
-      ]
-    }
-    return result
-  } catch (error) {
-    alert(error)
-    return []
-  }
-}
+    let amortizacionSheetNames: string[] = []
+    let interesesSheetNames: string[] = []
 
-export const getSheetsProps = async (
-  file: File,
-  sheetsNameAndRows: {
-    sheetName: string
-    cellRows: number[]
-  }[]
-): Promise<any[]> => {
-  try {
-    const workbook = await readFile(file)
-    let result: PartialSheetProps2[] = []
-    sheetsNameAndRows.forEach((item) => {
-      const sheet = workbook.Sheets[item.sheetName]
-      const paymentsQuantity: number = getPaymentsQuantity(sheet)
-      const paymentsQuoted = sheetsNameAndRows.find(
-        (elem) => elem.sheetName === item.sheetName
-      )?.cellRows as number[]
-      result = [
-        ...result,
-        {
-          name: item.sheetName,
-          checked: true,
-          paymentsQuantity,
-          paymentsQuoted,
-          type: 0,
-        },
-      ]
+    references.forEach((reference) => {
+      reference.amortizacion.forEach((item) => {
+        amortizacionSheetNames.push(item.sheetName)
+      })
+      reference.intereses.forEach((item) => {
+        interesesSheetNames.push(item.sheetName)
+      })
+    })
+
+    amortizacionSheetNames = [...new Set(amortizacionSheetNames)]
+    interesesSheetNames = [...new Set(interesesSheetNames)]
+    const sheetNames: string[] = [
+      ...new Set([...amortizacionSheetNames, ...interesesSheetNames]),
+    ]
+
+    result = sheetNames.map((sheetName) => {
+      let amortizacionInUse = 0
+      let interesesInUse = 0
+      references.forEach((item) => {
+        if (item.amortizacion.find((e) => e.sheetName === sheetName)) {
+          amortizacionInUse++
+        }
+        if (item.intereses.find((e) => e.sheetName === sheetName)) {
+          interesesInUse++
+        }
+      })
+      const paymentsQuantity: number = getPaymentsQuantity(
+        workbook.Sheets[sheetName]
+      )
+      return {
+        name: sheetName,
+        amortizacionInUse,
+        interesesInUse,
+        type: 0,
+        checked: true,
+        paymentsQuantity,
+      }
     })
     return result
   } catch (error) {
@@ -154,6 +147,7 @@ export const getSheetsProps = async (
     return []
   }
 }
+
 
 const getPaymentsQuantity = (sheet: XLSX.WorkSheet): number => {
   let result: number = 0
@@ -174,29 +168,6 @@ const getPaymentsQuantity = (sheet: XLSX.WorkSheet): number => {
   return result
 }
 
-const cellFunctionContainsSheetName = async (
-  file: File,
-  functionSheet: string,
-  functionCell: string,
-  name: string
-): Promise<boolean> => {
-  try {
-    const cellFunction = (await getCellFunction(
-      file,
-      functionSheet,
-      functionCell
-    )) as string
-    if (cellFunction !== null) {
-      return cellFunction.includes(name)
-    } else {
-      return false
-    }
-  } catch (error) {
-    alert(error)
-    return false
-  }
-}
-
 export const getCellValue = async (
   file: File,
   sheetName: string,
@@ -212,6 +183,33 @@ export const getCellValue = async (
       }
     } else {
       throw new Error(`Valor no encontrado en ${cellReference}`)
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+export const getCellValueFromWorkbook = (
+  workbook: XLSX.WorkBook,
+  sheetName: string,
+  cellReference: string
+): string | number | boolean | Date | undefined => {
+  try {
+    const sheet = workbook.Sheets[sheetName]
+    if (sheet) {
+      const cellObject: XLSX.CellObject = sheet[cellReference]
+      if (cellObject && cellObject.hasOwnProperty('v')) {
+        const cellValue = cellObject.v
+        if (cellValue) {
+          return cellValue
+        } else {
+          return 0
+        }
+      } else {
+        return 0
+      }
+    } else {
+      throw new Error(`Hoja ${sheetName} no encontrada`)
     }
   } catch (error) {
     console.error(error)
@@ -367,16 +365,15 @@ export const findIndexInRange = (
   return null
 }
 
-export const getColumnFormulas = async (
-  file: File,
-  sheetName: string,
+export const getColumnFormulasFromWebpcf = (
+  workbook: XLSX.WorkBook,
   cellLocation: string
-): Promise<string[]> => {
+): string[] => {
   const formulas: string[] = []
   try {
-    const sheet = await getSheet(file, sheetName)
+    const sheet = workbook.Sheets[WEBPCF]
     if (!sheet) {
-      throw new Error(`Hoja ${sheetName} no encontrada.`)
+      throw new Error(`Hoja ${WEBPCF} no encontrada.`)
     }
     const startCell = XLSX.utils.decode_cell(cellLocation)
     let rowIndex = startCell.r
@@ -410,37 +407,93 @@ export type CellInfo = {
   cellRow: number
 }
 
-const extractCellReferences = (formula: string): CellInfo[] => {
+export type CellInfo2 = {
+  sheetName: string
+  cellReference: string
+  value: number
+  paymentNumber: number
+  date: Date
+  type: 'amortizacion' | 'interes'
+}
+
+export type WebpcfReferences = {
+  date: number
+  paymentNumber: number
+  amortizacion: {
+    sheetName: string
+    cellReference: string
+    value: number
+  }[]
+  intereses: {
+    sheetName: string
+    cellReference: string
+    value: number
+  }[]
+  saldoInsoluto: number
+}
+
+const extractSheetNameReferenceValueAndSaldo = (
+  workbook: XLSX.WorkBook,
+  formula: string
+): {
+  sheetName: string
+  cellReference: string
+  value: number
+  capital: number
+}[] => {
   const cleanedFormula = formula.replace(/([A-Z]+):([A-Z]+),/g, '')
 
   const regex = /(?:'([^']+)'|([A-Za-z_][\w]*))!([A-Z]+)(\d+)/g
   let match
-  const cellInfoArray: CellInfo[] = []
+  const cellInfoArray: {
+    sheetName: string
+    cellReference: string
+    value: number
+    capital: number
+  }[] = []
 
   while ((match = regex.exec(cleanedFormula)) !== null) {
     const sheetName = match[1] || match[2]
     const column = match[3]
     const row = parseInt(match[4], 10)
-    const decodedCell = XLSX.utils.decode_cell(column + row)
+    const cellReference = column + row
+    const value = getCellValueFromWorkbook(
+      workbook,
+      sheetName,
+      cellReference
+    ) as number
+
+    const sheet = workbook.Sheets[sheetName]
+    const searchRange: string = 'A21:J28'
+    const capitalIndex = findIndexInRange(sheet, searchRange, 'capital')
+    if (!capitalIndex) {
+      throw new Error('Nombre de columna capital no encontrado')
+    }
+    const capitalCellReference = row + capitalIndex.colIndex.toString()
+    const capital = getCellValueFromWorkbook(
+      workbook,
+      sheetName,
+      capitalCellReference
+    ) as number
     cellInfoArray.push({
       sheetName,
-      cellRow: decodedCell.r,
+      cellReference,
+      value,
+      capital,
     })
   }
 
   return cellInfoArray
 }
 
-
-export const getCellReferences = async (
-  file: File,
-  sheetName: string,
+export const getWebpcfReferences = (
+  workbook: XLSX.WorkBook,
   cellReference: string
-): Promise<CellInfo[] | undefined> => {
+): WebpcfReferences[] => {
   try {
-    const sheet = await getSheet(file, sheetName)
-
-    if (!sheet) {
+    const sheetName = 'WEBPCF'
+    const webpcfSheet = workbook.Sheets[sheetName]
+    if (!webpcfSheet) {
       throw new Error(`Hoja ${sheetName} no encontrada.`)
     }
 
@@ -449,45 +502,65 @@ export const getCellReferences = async (
 
     let row = startCell.r
     let cellAddress = XLSX.utils.encode_cell({ r: row, c: column })
-    let cell: XLSX.CellObject = sheet[cellAddress]
+    let cell: XLSX.CellObject = webpcfSheet[cellAddress]
 
-    const allReferences: CellInfo[] = []
+    const allReferences: WebpcfReferences[] = []
 
     while (cell) {
       if (cell.f && cell.t === 'n') {
-        const references = extractCellReferences(cell.f)
-        allReferences.push(...references)
+        const date = webpcfSheet[
+          XLSX.utils.encode_cell({
+            r: row,
+            c: column - 2,
+          })
+        ]?.v as number
+        const paymentNumber = webpcfSheet[
+          XLSX.utils.encode_cell({
+            r: row,
+            c: column - 3,
+          })
+        ]?.v as number
+        const saldoInsoluto = webpcfSheet[
+          XLSX.utils.encode_cell({
+            r: row,
+            c: column + 3,
+          })
+        ]?.v as number
+        const interesesCellObject: XLSX.CellObject =
+          webpcfSheet[
+            XLSX.utils.encode_cell({
+              r: row,
+              c: column + 1,
+            })
+          ]
+        const amortizacionReferences = extractSheetNameReferenceValueAndSaldo(
+          workbook,
+          cell.f
+        )
+        if (interesesCellObject.f) {
+          const interesesReferences = extractSheetNameReferenceValueAndSaldo(
+            workbook,
+            interesesCellObject.f
+          )
+          const cellInfo: WebpcfReferences = {
+            amortizacion: amortizacionReferences,
+            intereses: interesesReferences,
+            date,
+            paymentNumber,
+            saldoInsoluto,
+          }
+          allReferences.push(cellInfo)
+        }
       }
       row++
       cellAddress = XLSX.utils.encode_cell({ r: row, c: column })
-      cell = sheet[cellAddress]
+      cell = webpcfSheet[cellAddress]
     }
-
     return allReferences
   } catch (error) {
     console.error(error)
+    return []
   }
-}
-
-export const mergeAndRemoveDuplicates = (
-  arr1: CellInfo[],
-  arr2: CellInfo[]
-): CellInfo[] => {
-  const map = new Map<string, CellInfo>()
-
-  const addToMap = (arr: CellInfo[]) => {
-    arr.forEach((cell) => {
-      const key = `${cell.sheetName}-${cell.cellRow}`
-      if (!map.has(key)) {
-        map.set(key, cell)
-      }
-    })
-  }
-
-  addToMap(arr1)
-  addToMap(arr2)
-
-  return Array.from(map.values())
 }
 
 export type sheetPaymentsQuoted = { sheetName: string; cellRows: number[] }
@@ -562,7 +635,6 @@ export const validateWebpcfData = async (
   file: File,
   columnName: string
 ): Promise<undefined> => {
-  const WEBPCF = 'WEBPCF'
   try {
     const sheet = await getSheet(file, WEBPCF)
     if (!sheet) {

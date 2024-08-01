@@ -2,7 +2,6 @@ import { useRef, useState } from 'react'
 
 import Wrapper from '@/components/Wrapper'
 
-import FormField from './FormField'
 import PlanDePagoDetalles from './PlanDePagoDetalles'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
@@ -11,7 +10,6 @@ export type queryData = {
   tipo: number
   nroCuota: number
   fecha: number
-  cuota: number
   capital: number
   intereses: number
   saldo: number
