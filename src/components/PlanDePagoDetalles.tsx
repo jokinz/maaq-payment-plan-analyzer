@@ -312,8 +312,7 @@ const PlanDePagoDetalles = ({ file }: props) => {
   const createSheetQueries = (queryData: queryData[]) => {
     let result: string = ''
     queryData.forEach((item) => {
-      if (item.intereses !== 0 || item.capital !== 0 ) {
-        console.log(item)
+      if (item.intereses !== 0 || item.capital !== 0) {
         result += unityInsertQuery(operationNumber, item)
       }
     })
