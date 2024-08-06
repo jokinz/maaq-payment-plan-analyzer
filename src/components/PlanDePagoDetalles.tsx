@@ -41,7 +41,7 @@ const PlanDePagoDetalles = ({ file }: props) => {
   const [operationNumber, setOperationNumber] = useState<number>(0)
   const [sheetsList, setSheetsList] = useState<sheetProps[]>([])
   const [insertQueries, setInsertQueries] = useState<string>('')
-  const [deleteOperation, setDeleteOperation] = useState<boolean>(false)
+  const [deleteOperation, setDeleteOperation] = useState<boolean>(true)
 
   const [webpfcFunctionsList, setWebpfcFunctionsList] = useState<string[]>([])
 
