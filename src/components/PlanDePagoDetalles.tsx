@@ -56,6 +56,8 @@ const PlanDePagoDetalles = ({ file }: props) => {
     []
   )
 
+  const [nanQuantity, setNanQuantity] = useState(0)
+
   const checkIfSelectedSheetsMissType = (sheetsList: sheetProps[]): boolean => {
     const result: boolean = sheetsList
       .filter((sheet: sheetProps) => sheet.checked)
@@ -353,6 +355,8 @@ const PlanDePagoDetalles = ({ file }: props) => {
       result += createSheetQueries(sheetData)
     }
     setInsertQueries(result)
+    var nanCounter = (result.match(/NaN/g) || []).length
+    setNanQuantity(nanCounter)
   }
 
   const getData = async (file: File) => {
@@ -511,6 +515,11 @@ const PlanDePagoDetalles = ({ file }: props) => {
               >
                 Crear queries
               </Button>
+              {nanQuantity > 0 && (
+                <p className="bold text-red-600">
+                  Cantidad de NaN: {nanQuantity}
+                </p>
+              )}
               <Query content={insertQueries} />
             </>
           ) : (
