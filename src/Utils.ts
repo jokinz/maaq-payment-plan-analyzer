@@ -117,7 +117,6 @@ export const getSheetsProps = (
     const sheetNames: string[] = [
       ...new Set([...amortizacionSheetNames, ...interesesSheetNames]),
     ]
-
     result = sheetNames.map((sheetName) => {
       let amortizacionInUse = 0
       let interesesInUse = 0
@@ -147,7 +146,6 @@ export const getSheetsProps = (
     return []
   }
 }
-
 
 const getPaymentsQuantity = (sheet: XLSX.WorkSheet): number => {
   let result: number = 0
@@ -441,10 +439,7 @@ const extractSheetNameReferenceValueAndSaldo = (
   value: number
   capital: number
 }[] => {
-  const cleanedFormula = formula.replace(/([A-Z]+):([A-Z]+),/g, '')
-
   const regex = /(?:'([^']+)'|([A-Za-z_][\w]*))!([A-Z]+)(\d+)/g
-  let match
   const cellInfoArray: {
     sheetName: string
     cellReference: string
@@ -452,16 +447,6 @@ const extractSheetNameReferenceValueAndSaldo = (
     capital: number
   }[] = []
 
-  while ((match = regex.exec(cleanedFormula)) !== null) {
-    const sheetName = match[1] || match[2]
-    const column = match[3]
-    const row = parseInt(match[4], 10)
-    const cellReference = column + row
-    const value = getCellValueFromWorkbook(
-      workbook,
-      sheetName,
-      cellReference
-    ) as number
 
     const sheet = workbook.Sheets[sheetName]
     const searchRange: string = 'A21:J28'
