@@ -447,28 +447,163 @@ const extractSheetNameReferenceValueAndSaldo = (
     capital: number
   }[] = []
 
+  const extractReferencesFromSubFormula = (subFormula: string) => {
+    let subMatch
+    while ((subMatch = regex.exec(subFormula)) !== null) {
+      const sheetName = subMatch[1] || subMatch[2]
+      const column = subMatch[3]
+      const row = parseInt(subMatch[4], 10)
+      const cellReference = column + row
+      const value = getCellValueFromWorkbook(
+        workbook,
+        sheetName,
+        cellReference
+      ) as number
 
-    const sheet = workbook.Sheets[sheetName]
-    const searchRange: string = 'A21:J28'
-    const capitalIndex = findIndexInRange(sheet, searchRange, 'capital')
-    if (!capitalIndex) {
-      throw new Error('Nombre de columna capital no encontrado')
+      const sheet = workbook.Sheets[sheetName]
+      const searchRange: string = 'A21:J28'
+      const capitalIndex = findIndexInRange(sheet, searchRange, 'capital')
+      if (!capitalIndex) {
+        throw new Error('Nombre de columna capital no encontrado')
+      }
+      const capitalCellReference = row + capitalIndex.colIndex.toString()
+      const capital = getCellValueFromWorkbook(
+        workbook,
+        sheetName,
+        capitalCellReference
+      ) as number
+
+      cellInfoArray.push({
+        sheetName,
+        cellReference,
+        value,
+        capital,
+      })
     }
-    const capitalCellReference = row + capitalIndex.colIndex.toString()
-    const capital = getCellValueFromWorkbook(
-      workbook,
-      sheetName,
-      capitalCellReference
-    ) as number
+  }
+
+  const handleSumarSiConjunto = (subFormula: string): void => {
+    const cleanSubFormula = subFormula.replace(/['"]/g, '')
+
+    const getColumnLetter = (str: string) => {
+      const match = str.match(/([A-Z]+):[A-Z]+$/)
+      return match ? match[1] : null
+    }
+    const getSheetName = (str: string) => {
+      const match = str.match(/^([^!]+)!/)
+      return match ? match[1] : null
+    }
+
+    const [values, rangeCriteria1, criteria1, rangeCriteria2, criteria2] =
+      cleanSubFormula.split(',')
+
+    const valuesSheetName = getSheetName(values) as string
+    const valuesColLetter = getColumnLetter(values) as string
+
+    const criteria1Value = getCellValueFromWorkbook(workbook, WEBPCF, criteria1)
+    const criteria1ColLetter = getColumnLetter(rangeCriteria1) as string
+
+    let value: number
+
+    if (rangeCriteria2 && criteria2) {
+      const criteria2Value = getCellValueFromWorkbook(
+        workbook,
+        WEBPCF,
+        criteria2
+      )
+      const criteria2ColLetter = getColumnLetter(rangeCriteria2) as string
+      value = sumColumnBasedOnSearchValue(
+        workbook,
+        valuesSheetName,
+        valuesColLetter,
+        criteria1Value,
+        criteria1ColLetter,
+        criteria2Value,
+        criteria2ColLetter
+      )
+    } else {
+      value = sumColumnBasedOnSearchValue(
+        workbook,
+        valuesSheetName,
+        valuesColLetter,
+        criteria1Value,
+        criteria1ColLetter
+      )
+    }
+    const cellReference = criteria2 ? criteria2 : criteria1
     cellInfoArray.push({
-      sheetName,
+      sheetName: valuesSheetName,
       cellReference,
       value,
-      capital,
+      capital: 0,
     })
   }
 
+  extractReferencesFromSubFormula(formula)
+
+  const conditionalFormulaRegex = /SUMIFS\(([^()]+(?:\([^()]*\))?[^()]*)\)/g
+  let conditionalMatch
+  while ((conditionalMatch = conditionalFormulaRegex.exec(formula)) !== null) {
+    const conditionalSubFormula = conditionalMatch[1]
+    handleSumarSiConjunto(conditionalSubFormula)
+  }
   return cellInfoArray
+}
+
+function sumColumnBasedOnSearchValue(
+  workbook: XLSX.WorkBook,
+  sheetName: string,
+  valuesColLetter: string,
+  firstSearchValue: string | number | boolean | Date | undefined,
+  firstColLetter: string,
+  secondSearchValue?: string | number | boolean | Date,
+  secondColLetter?: string
+): number {
+  const worksheet: XLSX.WorkSheet = workbook.Sheets[sheetName]
+
+  if (!worksheet) {
+    throw new Error(`Sheet with name "${sheetName}" not found.`)
+  }
+
+  const range = XLSX.utils.decode_range(worksheet['!ref'] || '')
+  const valuesColIndex = XLSX.utils.decode_col(valuesColLetter)
+  const firstColIndex = XLSX.utils.decode_col(firstColLetter)
+  let sum = 0
+  if (secondSearchValue && secondColLetter) {
+    const secondColIndex = XLSX.utils.decode_col(secondColLetter)
+    for (let row = range.s.r; row <= range.e.r; row++) {
+      const valueCell =
+        worksheet[XLSX.utils.encode_cell({ r: row, c: valuesColIndex })]
+      const firstCell =
+        worksheet[XLSX.utils.encode_cell({ r: row, c: firstColIndex })]
+      const secondCell =
+        worksheet[XLSX.utils.encode_cell({ r: row, c: secondColIndex })]
+
+      if (
+        firstCell &&
+        firstCell.v === firstSearchValue &&
+        secondCell &&
+        secondCell.v === secondSearchValue
+      ) {
+        const value = valueCell ? valueCell.v : 0
+        sum += typeof value === 'number' ? value : 0
+      }
+    }
+  } else {
+    for (let row = range.s.r; row <= range.e.r; row++) {
+      const firstCell =
+        worksheet[XLSX.utils.encode_cell({ r: row, c: firstColIndex })]
+      const secondCell =
+        worksheet[XLSX.utils.encode_cell({ r: row, c: valuesColIndex })]
+
+      if (firstCell && firstCell.v === firstSearchValue) {
+        const value = secondCell ? secondCell.v : 0
+        sum += typeof value === 'number' ? value : 0
+      }
+    }
+  }
+
+  return sum
 }
 
 export const getWebpcfReferences = (
