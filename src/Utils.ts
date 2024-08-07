@@ -518,24 +518,26 @@ export const getWebpcfReferences = (
               c: column + 1,
             })
           ]
+        let cellInfo: WebpcfReferences = {
+          amortizacion: [],
+          intereses: [],
+          date,
+          paymentNumber,
+          saldoInsoluto,
+        }
         const amortizacionReferences = extractSheetNameReferenceValueAndSaldo(
           workbook,
           cell.f
         )
+        cellInfo.amortizacion = amortizacionReferences
         if (interesesCellObject.f) {
           const interesesReferences = extractSheetNameReferenceValueAndSaldo(
             workbook,
             interesesCellObject.f
           )
-          const cellInfo: WebpcfReferences = {
-            amortizacion: amortizacionReferences,
-            intereses: interesesReferences,
-            date,
-            paymentNumber,
-            saldoInsoluto,
-          }
-          allReferences.push(cellInfo)
+          cellInfo.intereses = interesesReferences
         }
+        allReferences.push(cellInfo)
       }
       row++
       cellAddress = XLSX.utils.encode_cell({ r: row, c: column })
