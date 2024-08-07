@@ -541,7 +541,20 @@ export const getWebpcfReferences = (
       cellAddress = XLSX.utils.encode_cell({ r: row, c: column })
       cell = webpcfSheet[cellAddress]
     }
-    return allReferences
+    const filteredReferences = allReferences.map((reference) => {
+      const filteredAmortizacion = reference.amortizacion.filter(
+        (item) => item.value !== 0
+      )
+      const filteredIntereses = reference.intereses.filter(
+        (item) => item.value !== 0
+      )
+      return {
+        ...reference,
+        amortizacion: filteredAmortizacion,
+        intereses: filteredIntereses,
+      }
+    })
+    return filteredReferences
   } catch (error) {
     console.error(error)
     return []
