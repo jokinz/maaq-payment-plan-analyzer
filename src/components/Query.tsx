@@ -15,7 +15,7 @@ function Query({ content }: props) {
         style={{ gridColumn: 'span 12 / span 12' }}
         disabled
         value={content}
-        className="textarea-query min-h-[150]"
+        className="textarea-query min-h-[150] resize-y"
       ></Textarea>
       <Button
         style={{ gridColumn: '12 / span 1' }}
