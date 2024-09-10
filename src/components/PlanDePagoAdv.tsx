@@ -15,6 +15,11 @@ export type queryData = {
   saldo: number
 }
 
+export type operationAndQuery = {
+  operation: number
+  query: string
+}
+
 const PlanDePagoAdv = () => {
   const [files, setFiles] = useState<FileList | null>(null)
   const [filesVersion, setFilesVersion] = useState<number>(0)
