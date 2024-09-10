@@ -430,7 +430,7 @@ const PlanDePagoDetalles = ({ file }: props) => {
             index,
             checked: sheetProp.checked,
             paymentsQuantity: sheetProp.paymentsQuantity,
-            type: sheetProp.type,
+            type: sheetProps.length === 1 ? 1 : sheetProp.type,
             amortizacionInUse: sheetProp.amortizacionInUse,
             interesesInUse: sheetProp.interesesInUse,
             updateSheetChecked,
