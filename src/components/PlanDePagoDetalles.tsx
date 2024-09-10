@@ -466,7 +466,7 @@ const PlanDePagoDetalles = ({ file }: props) => {
     if (!checkIfSelectedSheetsMissType(sheetsList)) {
       createInsertQueries(sheetsList)
     }
-  }, [sheetsList])
+  }, [sheetsList, deleteOperation])
 
   return (
     <>
