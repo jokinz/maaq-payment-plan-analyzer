@@ -370,7 +370,7 @@ const PlanDePagoDetalles = ({ file, updateAllQueries }: props) => {
         WEBPCF,
         cellOperationNumber
       )
-      if (typeof operationNumber !== 'number') {
+      if (typeof operationNumber !== 'number' || operationNumber === 0) {
         throw new Error('Número de operación no encontrado')
       } else {
         setOperationNumber(operationNumber)
