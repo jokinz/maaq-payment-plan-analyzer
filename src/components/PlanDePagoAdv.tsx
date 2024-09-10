@@ -5,6 +5,7 @@ import Wrapper from '@/components/Wrapper'
 import PlanDePagoDetalles from './PlanDePagoDetalles'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
+import { Button } from './ui/button'
 
 export type queryData = {
   tipo: number
@@ -59,6 +60,11 @@ const PlanDePagoAdv = () => {
               ></PlanDePagoDetalles>
             )
           })}
+          <Button
+            disabled={allQueries.length === 0}
+          >
+            Copiar todo
+          </Button>
         </>
       )}
     </Wrapper>
