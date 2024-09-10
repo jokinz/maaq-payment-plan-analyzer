@@ -474,6 +474,12 @@ const PlanDePagoDetalles = ({ file, updateAllQueries }: props) => {
     }
   }, [sheetsList, deleteOperation])
 
+  useEffect(() => {
+    if (operationNumber !== 0) {
+      updateAllQueries({ operation: operationNumber, query: insertQueries })
+    }
+  }, [operationNumber, insertQueries])
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4 items-center text-left">
