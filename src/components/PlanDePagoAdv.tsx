@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 
 import Wrapper from '@/components/Wrapper'
 
@@ -17,6 +17,12 @@ export type queryData = {
 
 const PlanDePagoAdv = () => {
   const [files, setFiles] = useState<FileList | null>(null)
+  const [filesVersion, setFilesVersion] = useState<number>(0)
+  useEffect(() => {
+    if (files?.length > 0) {
+      setFilesVersion((prev) => prev + 1)
+    }
+  }, [files])
 
   const fileRef = useRef<HTMLInputElement>(null)
 
