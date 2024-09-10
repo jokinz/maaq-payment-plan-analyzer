@@ -16,7 +16,7 @@ export type queryData = {
 }
 
 const PlanDePagoAdv = () => {
-  const [file, setFile] = useState<FileList | null>(null)
+  const [files, setFiles] = useState<FileList | null>(null)
 
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -32,17 +32,22 @@ const PlanDePagoAdv = () => {
             type="file"
             accept=".xls, .xlsm, .xlsx"
             multiple
-            onChange={(event) => setFile(event.currentTarget.files)}
+            onChange={(event) => setFiles(event.currentTarget.files)}
           />
         </div>
       </section>
-      {file &&
-        file.length > 0 &&
-        Array.from(file).map((file, index) => {
-          return (
-            <PlanDePagoDetalles key={index} file={file}></PlanDePagoDetalles>
-          )
-        })}
+      {files?.length > 0 && (
+        <>
+          {Array.from(files).map((file, index) => {
+            return (
+              <PlanDePagoDetalles
+                key={`${index}${filesVersion}`}
+                file={file}
+              ></PlanDePagoDetalles>
+            )
+          })}
+        </>
+      )}
     </Wrapper>
   )
 }
