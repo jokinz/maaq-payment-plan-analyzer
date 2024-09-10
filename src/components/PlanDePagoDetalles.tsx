@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import * as XLSX from 'xlsx'
 
@@ -461,6 +461,13 @@ const PlanDePagoDetalles = ({ file }: props) => {
     newSheetList[index].type = type
     setSheetsList(newSheetList)
   }
+
+  useEffect(() => {
+    if (!checkIfSelectedSheetsMissType(sheetsList)) {
+      createInsertQueries(sheetsList)
+    }
+  }, [sheetsList])
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4 items-center text-left">
@@ -509,12 +516,6 @@ const PlanDePagoDetalles = ({ file }: props) => {
                 </Label>
               </div>
 
-              <Button
-                disabled={checkIfSelectedSheetsMissType(sheetsList)}
-                onClick={() => createInsertQueries(sheetsList)}
-              >
-                Crear queries
-              </Button>
               {nanQuantity > 0 && (
                 <p className="bold text-red-600">
                   Cantidad de NaN: {nanQuantity}
