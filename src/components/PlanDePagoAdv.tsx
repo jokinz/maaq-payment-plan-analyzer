@@ -81,6 +81,7 @@ const PlanDePagoAdv = () => {
               <PlanDePagoDetalles
                 key={`${index}${filesVersion}`}
                 file={file}
+                updateAllQueries={updateAllQueries}
               ></PlanDePagoDetalles>
             )
           })}

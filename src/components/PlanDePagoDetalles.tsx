@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 
 import { LoadingSpinner } from './LoadingSpinner'
-import { queryData } from './PlanDePagoAdv'
+import { operationAndQuery, queryData } from './PlanDePagoAdv'
 import Query from './Query'
 import Sheet, { sheetProps } from './Sheet'
 
@@ -27,6 +27,7 @@ import { Label } from './ui/label'
 
 type props = {
   file: File
+  updateAllQueries(operationAndQuery: operationAndQuery): void
 }
 
 const WEBPCF: string = 'WEBPCF'
@@ -34,7 +35,7 @@ const cellOperationNumber: string = 'C4'
 const AmortizacionFirstCellLocation = 'E10'
 const InteresesFirstCellLocation = 'F10'
 
-const PlanDePagoDetalles = ({ file }: props) => {
+const PlanDePagoDetalles = ({ file, updateAllQueries }: props) => {
   const [loading, setLoading] = useState<boolean>(false)
   const [dataLoaded, setDataLoaded] = useState<boolean>(false)
 
