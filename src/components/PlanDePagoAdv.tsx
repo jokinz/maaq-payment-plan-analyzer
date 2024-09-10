@@ -34,6 +34,30 @@ const PlanDePagoAdv = () => {
 
   const fileRef = useRef<HTMLInputElement>(null)
 
+  const updateAllQueries = (queryObject: operationAndQuery) => {
+    if (allQueries.length > 0) {
+      setAllQueries((prev) => {
+        const index: number = prev.findIndex(
+          (item) => item.operation === queryObject.operation
+        )
+        if (index !== -1) {
+          prev[index] = queryObject
+        }else{
+          prev.push(queryObject)
+        }
+        return [...prev]
+      })
+    } else {
+      setAllQueries([queryObject])
+    }
+  }
+
+  const mergeQueries = (): string => {
+    let mergedQueries: string = ''
+    allQueries.forEach((query) => (mergedQueries = mergedQueries + query.query))
+    return mergedQueries
+  }
+
   return (
     <Wrapper>
       <h2 className="font-bold">Aplicación de plan de pago Unity</h2>
@@ -62,6 +86,7 @@ const PlanDePagoAdv = () => {
           })}
           <Button
             disabled={allQueries.length === 0}
+            onClick={() => navigator.clipboard.writeText(mergeQueries())}
           >
             Copiar todo
           </Button>
