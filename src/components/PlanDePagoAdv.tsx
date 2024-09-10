@@ -19,7 +19,7 @@ const PlanDePagoAdv = () => {
   const [files, setFiles] = useState<FileList | null>(null)
   const [filesVersion, setFilesVersion] = useState<number>(0)
   useEffect(() => {
-    if (files?.length > 0) {
+    if (files && files.length > 0) {
       setFilesVersion((prev) => prev + 1)
     }
   }, [files])
@@ -42,7 +42,7 @@ const PlanDePagoAdv = () => {
           />
         </div>
       </section>
-      {files?.length > 0 && (
+      {files && files.length > 0 && (
         <>
           {Array.from(files).map((file, index) => {
             return (
