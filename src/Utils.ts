@@ -210,7 +210,7 @@ export const getCellValueFromWorkbook = (
       throw new Error(`Hoja ${sheetName} no encontrada`)
     }
   } catch (error) {
-    console.error(error)
+    alert(error)
   }
 }
 
