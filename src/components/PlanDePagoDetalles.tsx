@@ -57,6 +57,7 @@ const PlanDePagoDetalles = ({ file, updateAllQueries }: props) => {
     []
   )
 
+  const [containsOperationNumber, setContainsOperationNumber] = useState(true);
   const [nanQuantity, setNanQuantity] = useState(0)
 
   const checkIfSelectedSheetsMissType = (sheetsList: sheetProps[]): boolean => {
@@ -375,6 +376,10 @@ const PlanDePagoDetalles = ({ file, updateAllQueries }: props) => {
         setOperationNumber(operationNumber)
       }
 
+      if (file.name.includes(operationNumber.toString())) {
+        setContainsOperationNumber(false)
+      }
+
       const formulasListAmortizacion = getColumnFormulasFromWebpcf(
         workbook,
         AmortizacionFirstCellLocation
@@ -484,6 +489,11 @@ const PlanDePagoDetalles = ({ file, updateAllQueries }: props) => {
           <p className="text-left">{amortizacionFunctionList.toString()}</p>
           <p className="text-left">Hojas usadas en columna Intereses:</p>
           <p className="text-left">{interesesFunctionList.toString()}</p>
+          {containsOperationNumber && (
+                <p className="bold text-red-600">
+                  Nombre del archivo no contiene el número de operación
+                </p>
+              )}
           {webpfcFunctionsList.length > 0 ? (
             <>
               {sheetsList
