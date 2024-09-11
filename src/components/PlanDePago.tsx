@@ -245,7 +245,7 @@ function PlanDePago() {
           />
           <FormField
             htmlFor="externalPaymentsQuantity"
-            label="Cantidad de cuotas"
+            label="Cantidad de cuotas (WEBPCF)"
             value={
               externalPaymentsQuantity !== 0 ? externalPaymentsQuantity : ''
             }
@@ -256,7 +256,7 @@ function PlanDePago() {
           />
           <FormField
             htmlFor="totalCredit"
-            label="Crédito Total"
+            label="Crédito Total (WEBPCF)"
             value={externalTotalCredit !== 0 ? externalTotalCredit : ''}
             onChange={(event) =>
               parseInt(event.target.value) &&
