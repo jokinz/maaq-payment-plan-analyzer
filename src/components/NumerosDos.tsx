@@ -34,14 +34,8 @@ const NumerosDos = () => {
     paymentNumberColumn: number
   ) => {
     try {
-      const operationList = await getColumnData(
-        file,
-        operationNumberColumn
-      )
-      const paymentList = await getColumnData(
-        file,
-        paymentNumberColumn
-      )
+      const operationList = await getColumnData(file, operationNumberColumn)
+      const paymentList = await getColumnData(file, paymentNumberColumn)
       if (operationList.length === paymentList.length) {
         let data: string = ''
         operationList.forEach(
@@ -173,7 +167,9 @@ const NumerosDos = () => {
             </div>
           </>
         )}
-        <Button onClick={() => handleButtonClick()}>Crear queries</Button>
+        <Button disabled={updatingStatus} onClick={() => handleButtonClick()}>
+          Crear queries
+        </Button>
 
         <Query content={query}></Query>
       </section>
