@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 
 import '../App.css'
 
-
 import { getDataQuery, paymentPlansBackupQuery, updateQuery } from '../Queries'
 import {
   createUpdateQueries,
@@ -10,7 +9,7 @@ import {
   getCellValue,
   getLastCellValue,
   getAllContentFromSheet,
-  validateWebpcfData
+  validateWebpcfData,
 } from '../Utils'
 
 import FormField from '@/components/FormField'
@@ -27,6 +26,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 
 import { faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -431,7 +436,8 @@ function PlanDePago() {
                 const updateQueries = await createUpdateQueries(
                   file[0],
                   targetSheet,
-                  paymentNumberColumn, cellOperationNumber
+                  paymentNumberColumn,
+                  cellOperationNumber
                 )
                 setQuery2(updateQueries)
               }
@@ -443,9 +449,16 @@ function PlanDePago() {
           Crear Update Queries
         </Button>
         {fileSheetData && (
-          <div className="overflow-scroll max-h-96 col-span-2">
-            <Spreadsheet data={fileSheetData} />
-          </div>
+          <Accordion className="col-span-2" type="single" collapsible>
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Contenido de la hoja</AccordionTrigger>
+              <AccordionContent>
+                <div className="overflow-scroll max-h-96">
+                  <Spreadsheet data={fileSheetData} />{' '}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         )}
         <h3 className="col-span-2 font-bold">Update queries: </h3>
         <Query content={query2}></Query>
