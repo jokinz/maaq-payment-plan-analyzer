@@ -89,7 +89,8 @@ function TraspasoDeBienesYBaja() {
           content={
             targetOperation
               ? `SELECT * FROM SCA_ADMINI..GAR WHERE FLD_GAR_OPER = ${targetOperation}
-              DELETE FROM SCA_ADMINI..GAR WHERE FLD_GAR_OPER = ${targetOperation}`
+SELECT * FROM SCA_ADMINI..GAR WHERE FLD_GAR_OPER = ${sourceOperation}
+DELETE FROM SCA_ADMINI..GAR WHERE FLD_GAR_OPER = ${targetOperation}`
               : ''
           }
         ></Query>
