@@ -185,7 +185,11 @@ function PlanDePago() {
                 value="colombia"
                 id="colombia"
                 checked={country === 'colombia'}
-                onChange={() => setCountry('colombia')}
+                onClick={() => {
+                  setCellOperationNumber('C4')
+                  setCellTotalCredit('H5')
+                  setCountry('colombia')
+                }}
               />
               <Label htmlFor="colombia">Colombia</Label>
             </div>
@@ -194,8 +198,11 @@ function PlanDePago() {
                 value="chile"
                 id="chile"
                 checked={country === 'chile'}
-                onChange={() => setCountry('chile')}
-                disabled
+                onClick={() => {
+                  setCellOperationNumber('C1')
+                  setCellTotalCredit('H5')
+                  setCountry('chile')
+                }}
               />
               <Label htmlFor="chile">Chile</Label>
             </div>
@@ -300,12 +307,7 @@ function PlanDePago() {
 
           <Button
             className="col-span-2"
-            disabled={
-              externalOperationNumber === 0 ||
-              externalPaymentsQuantity === 0 ||
-              externalTotalCredit === 0 ||
-              file === null
-            }
+            disabled={file === null}
             onClick={(event) => {
               event.preventDefault()
               validate()
@@ -388,7 +390,7 @@ function PlanDePago() {
               try {
                 file &&
                   targetSheet &&
-                  validateWebpcfData(file[0], paymentNumberColumn)
+                  validateWebpcfData(file[0], paymentNumberColumn, targetSheet)
               } catch (error) {
                 alert(error)
               }
