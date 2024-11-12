@@ -768,12 +768,13 @@ export const getLastCellValue = async (
 
 export const validateWebpcfData = async (
   file: File,
-  columnName: string
+  columnName: string,
+  targetSheet: string
 ): Promise<undefined> => {
   try {
-    const sheet = await getSheet(file, WEBPCF)
+    const sheet = await getSheet(file, targetSheet)
     if (!sheet) {
-      throw new Error(`Hoja ${WEBPCF} no encontrada.`)
+      throw new Error(`Hoja ${targetSheet} no encontrada.`)
     }
     const columnRange = XLSX.utils.decode_range(sheet['!ref'] as string)
     const colIndex = XLSX.utils.decode_col(columnName)
@@ -797,15 +798,21 @@ export const validateWebpcfData = async (
           const siguienteFechVenc =
             sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 1 })]
               ?.v
-          const cuota =
+          const fileCuota =
             sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 2 })]?.v
-          const amortizacion =
+          const cuota = fileCuota ? fileCuota : 0
+          const fileAmortizacion =
             sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })]?.v
-          const siguienteAmortizacion =
+          const amortizacion = fileAmortizacion ? fileAmortizacion : 0
+          const fileSiguienteAmortizacion =
             sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 3 })]
               ?.v
-          const intereses =
+          const siguienteAmortizacion = fileSiguienteAmortizacion
+            ? fileSiguienteAmortizacion
+            : 0
+          const fileIntereses =
             sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })]?.v
+          const intereses = fileIntereses ? fileIntereses : 0
           const seguros =
             sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 5 })]?.v
           const saldoInsoluto =
@@ -875,8 +882,11 @@ export const createUpdateQueries = async (
           sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 1 })]?.v
         const cuota =
           sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 2 })]?.v
-        const amortizacion =
-          sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })]?.v
+        const amortizacion = sheet[
+          XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })
+        ]?.v
+          ? sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 3 })]?.v
+          : 0
         const intereses =
           sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })]?.v
         const seguros =
