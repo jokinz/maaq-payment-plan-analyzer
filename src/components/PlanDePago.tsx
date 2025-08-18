@@ -110,6 +110,17 @@ function PlanDePago() {
         if (targetSheet) {
           const sheetData = await getAllContentFromSheet(file[0], targetSheet)
           sheetData && setFileSheetData(sheetData)
+          let operationNumber = await getCellValue(
+            file[0],
+            targetSheet,
+            'C1'
+          )
+          if (typeof operationNumber === 'number') {
+            setCountry('chile')
+          }else{
+            setCountry('colombia')
+          }
+          
         }
       })()
     }
