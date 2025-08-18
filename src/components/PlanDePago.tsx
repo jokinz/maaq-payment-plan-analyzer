@@ -191,29 +191,25 @@ function PlanDePago() {
           <RadioGroup defaultValue="colombia">
             <div className="flex items-center space-x-2">
               <RadioGroupItem
-                value="colombia"
-                id="colombia"
-                checked={country === 'colombia'}
-                onClick={() => {
-                  setCellOperationNumber('C4')
-                  setCellTotalCredit('H5')
-                  setCountry('colombia')
-                }}
-              />
-              <Label htmlFor="colombia">Colombia</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem
                 value="chile"
                 id="chile"
                 checked={country === 'chile'}
                 onClick={() => {
-                  setCellOperationNumber('C1')
-                  setCellTotalCredit('H5')
                   setCountry('chile')
                 }}
               />
               <Label htmlFor="chile">Chile</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem
+                value="colombia"
+                id="colombia"
+                checked={country === 'colombia'}
+                onClick={() => {
+                  setCountry('colombia')
+                }}
+              />
+              <Label htmlFor="colombia">Colombia</Label>
             </div>
           </RadioGroup>
         </div>
