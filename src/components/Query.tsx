@@ -18,7 +18,7 @@ function Query({ content }: props) {
         className="textarea-query min-h-auto resize-y"
       ></Textarea>
       <Button
-        style={{ gridColumn: '12 / span 1' }}
+        className="grid-cols-12 col-span-2 md:col-span-1"
         disabled={content === ''}
         onClick={(event) => {
           event.preventDefault()
