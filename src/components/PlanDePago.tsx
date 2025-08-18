@@ -115,6 +115,17 @@ function PlanDePago() {
     }
   }, [targetSheet])
 
+  useEffect(() => {
+    if (country == 'chile') {
+      setCellOperationNumber('C1')
+      setCellTotalCredit('H5')
+    }
+    if (country == 'colombia') {
+      setCellOperationNumber('C4')
+      setCellTotalCredit('H8')
+    }
+  }, [country]);
+
   const validate = async () => {
     if (file && file.length > 0 && targetSheet) {
       try {
