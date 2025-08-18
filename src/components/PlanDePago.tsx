@@ -381,8 +381,8 @@ function PlanDePago() {
             disabled={
               !file ||
               fileOperationNumber !== externalOperationNumber ||
-              fileTotalCredit - externalTotalCredit >= 100 ||
-              fileTotalCredit - externalTotalCredit <= -100 ||
+              fileTotalCredit - externalTotalCredit >= 1000 ||
+              fileTotalCredit - externalTotalCredit <= -1000 ||
               filePaymentsQuantity !== externalPaymentsQuantity
             }
             onClick={(event) => {
@@ -426,8 +426,8 @@ function PlanDePago() {
         <Button
           disabled={
             fileOperationNumber !== externalOperationNumber ||
-            fileTotalCredit - externalTotalCredit >= 100 ||
-            fileTotalCredit - externalTotalCredit <= -100 ||
+            fileTotalCredit - externalTotalCredit >= 1000 ||
+            fileTotalCredit - externalTotalCredit <= -1000 ||
             filePaymentsQuantity !== externalPaymentsQuantity ||
             file === null
           }
