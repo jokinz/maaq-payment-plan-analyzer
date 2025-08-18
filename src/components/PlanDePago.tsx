@@ -47,8 +47,8 @@ function PlanDePago() {
   const [country, setCountry] = useState<Countries>('colombia')
   const [currency, setCurrency] = useState<Currencies>('peso')
 
-  const [cellOperationNumber, setCellOperationNumber] = useState<string>('C4')
-  const [cellTotalCredit, setCellTotalCredit] = useState<string>('H8')
+  const [cellOperationNumber, setCellOperationNumber] = useState<string>('C1')
+  const [cellTotalCredit, setCellTotalCredit] = useState<string>('H5')
   const [updatingCellOperationNumber, setUpdatingCellOperationNumber] =
     useState<boolean>(false)
   const [updatingCellTotalCredit, setUpdatingCellTotalCredit] =
