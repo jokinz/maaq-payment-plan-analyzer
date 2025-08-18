@@ -157,11 +157,9 @@ function PlanDePago() {
   }
 
   const restartValues = () => {
-    setCountry('colombia')
+    setCountry('chile')
     setCurrency('peso')
-    setCellOperationNumber('C4')
     setUpdatingCellOperationNumber(false)
-    setCellTotalCredit('H8')
     setUpdatingCellTotalCredit(false)
     setExternalOperationNumber(0)
     setExternalTotalCredit(0)
