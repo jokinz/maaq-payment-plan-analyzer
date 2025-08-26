@@ -18,7 +18,7 @@ import {
 } from './ui/select'
 
 const NumerosDos = () => {
-  const [updateNumber, setUpdateNumber] = useState<number>(2)
+  const [updateNumber, setUpdateNumber] = useState<number | string>(2)
   const [updatingStatus, setUpdatingStatus] = useState<boolean>(false)
   const [file, setFile] = useState<FileList | null>(null)
   const [query, setQuery] = useState<string>('')
@@ -104,10 +104,14 @@ const NumerosDos = () => {
             type="text"
             onChange={(event) => {
               const value = event.target.value.replace(/[^0-9]/g, '')
-              if (isNaN(parseInt(value))) {
-                setUpdateNumber(0)
+              if (value === '') {
+                setUpdateNumber('')
               } else {
-                setUpdateNumber(parseInt(value))
+                if (isNaN(parseInt(value))) {
+                  setUpdateNumber(0)
+                } else {
+                  setUpdateNumber(parseInt(value))
+                }
               }
             }}
           />
