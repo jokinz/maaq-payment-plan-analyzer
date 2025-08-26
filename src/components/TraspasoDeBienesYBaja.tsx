@@ -79,6 +79,11 @@ function TraspasoDeBienesYBaja() {
             htmlFor="sourceOperation"
             label="Operation Fuente"
             value={sourceOperation ? sourceOperation : ''}
+            style={
+              sourceOperation && sourceOperation >= targetOperation
+                ? { borderColor: 'red' }
+                : { borderColor: 'inherit' }
+            }
             onChange={(event) => {
               event.preventDefault()
               setSourceOperation(parseInt(event.target.value))
