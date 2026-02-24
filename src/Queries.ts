@@ -135,3 +135,29 @@ export const goodsBackupQuery = (date: Date): string => {
   FROM SCA_ADMINI..GAR`
   return query
 }
+
+export const checkDicomQuery = (
+  contractList: number[],
+  paymentList: number[],
+  documentList: number[]
+): string => {
+  let lines: string[] = []
+
+  contractList.forEach((contract, index) =>
+    lines.push(
+      `SELECT * FROM SCA_HIPOTEC..COL WHERE FLD_COL_OPER = ${contract} AND FLD_COL_NCU = ${paymentList[index]} AND FLD_COL_NDOC = '${documentList[index]}'\n`
+    )
+  )
+
+  const query: string = lines.join('UNION ')
+  return query
+}
+
+export const insertDicomQuery = (documentList: number[]): string => {
+  let query: string = `USE SCA_HIPOTEC\nGO\n`
+  documentList.forEach((document) => {
+    query += `INSERT INTO FOLIO_DIC(folio) VALUES ('${document}');\n`
+  })
+
+  return query
+}
