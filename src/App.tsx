@@ -8,6 +8,7 @@ import PlanDePago from './components/PlanDePago'
 import TraspasoDeBienesYBaja from './components/TraspasoDeBienesYBaja'
 import NumerosDos from './components/NumerosDos'
 import PlanDePagoAdv from './components/PlanDePagoAdv'
+import CargaDicom from './components/CargaDicom'
 
 function App() {
   return (
@@ -22,6 +23,9 @@ function App() {
           <TabsTrigger value="paymentPlanAdvanced">
             Plan de pago Adv.
           </TabsTrigger>
+          <TabsTrigger value="cargaDicom">
+            Carga Dicom
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="paymentPlan">
           <PlanDePago />
@@ -34,6 +38,9 @@ function App() {
         </TabsContent>
         <TabsContent value="paymentPlanAdvanced">
           <PlanDePagoAdv />
+        </TabsContent>
+        <TabsContent value="cargaDicom">
+          <CargaDicom />
         </TabsContent>
       </Tabs>
     </ThemeProvider>
