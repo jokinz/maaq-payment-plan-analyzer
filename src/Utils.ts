@@ -237,7 +237,7 @@ export const getCellFunction = async (
 export const getColumnData = async (
   file: File,
   colIndex: number
-): Promise<any[]> => {
+): Promise<number[]> => {
   try {
     const workbook = await readFile(file)
     const sheet = workbook.Sheets[workbook.SheetNames[0]]
@@ -252,10 +252,19 @@ export const getColumnData = async (
       const cellRef = XLSX.utils.encode_cell(cellAddress)
       const numCuota = sheet[cellRef]?.v
 
-      if (numCuota !== undefined && typeof numCuota === 'number') {
+      if (numCuota !== undefined) {
         const operationNumber =
           sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex })]?.v
-        columnData.push(operationNumber)
+        if (typeof operationNumber === 'number') {
+          columnData.push(operationNumber)
+          continue
+        }
+        if (
+          typeof operationNumber === 'string' &&
+          !isNaN(parseInt(operationNumber))
+        ) {
+          columnData.push(parseInt(operationNumber))
+        }
       }
     }
     return columnData
