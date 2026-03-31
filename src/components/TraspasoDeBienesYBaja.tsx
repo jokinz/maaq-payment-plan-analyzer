@@ -33,7 +33,7 @@ const StatusList: Status[] = [
   { value: '11', text: 'DEVOLUCION VOLUNTARIA' },
   { value: '12', text: 'CANCELADO PREPAGO' },
   { value: '2', text: 'EXTINGUIDA' },
-  { value: '3', text: 'CASTIGO NO RECUPERADO' },
+  { value: '3', text: 'CASTIGO NO RECUPERADO/INCAUTACIÓN DE BIENES' },
   { value: '4', text: 'VENCIDAS INCONSISTENTES' },
   { value: '5', text: 'CANCELADO MODIFICADO' },
   { value: '6', text: 'CANCELADO - REPROGRAMADO' },
