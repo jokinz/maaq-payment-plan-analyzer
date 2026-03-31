@@ -418,7 +418,7 @@ function PlanDePago() {
                 value="peso"
                 id="peso"
                 checked={currency === 'peso'}
-                onChange={() => setCurrency('peso')}
+                onClick={() => setCurrency('peso')}
               />
               <Label htmlFor="peso">Peso</Label>
             </div>
@@ -427,7 +427,7 @@ function PlanDePago() {
                 value="usd"
                 id="usd"
                 checked={currency === 'usd'}
-                onChange={() => setCurrency('usd')}
+                onClick={() => setCurrency('usd')}
               />
               <Label htmlFor="usd">USD</Label>
             </div>
