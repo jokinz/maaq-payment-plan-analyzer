@@ -110,17 +110,12 @@ function PlanDePago() {
         if (targetSheet) {
           const sheetData = await getAllContentFromSheet(file[0], targetSheet)
           sheetData && setFileSheetData(sheetData)
-          let operationNumber = await getCellValue(
-            file[0],
-            targetSheet,
-            'C1'
-          )
+          let operationNumber = await getCellValue(file[0], targetSheet, 'C1')
           if (typeof operationNumber === 'number') {
             setCountry('chile')
-          }else{
+          } else {
             setCountry('colombia')
           }
-          
         }
       })()
     }
@@ -135,7 +130,7 @@ function PlanDePago() {
       setCellOperationNumber('C4')
       setCellTotalCredit('H8')
     }
-  }, [country]);
+  }, [country])
 
   const validate = async () => {
     if (file && file.length > 0 && targetSheet) {
@@ -371,9 +366,9 @@ function PlanDePago() {
                 fileTotalCredit - externalTotalCredit === 0
                   ? 'green'
                   : fileTotalCredit - externalTotalCredit <= 100 &&
-                    fileTotalCredit - externalTotalCredit >= -100
-                  ? 'orange'
-                  : 'red',
+                      fileTotalCredit - externalTotalCredit >= -100
+                    ? 'orange'
+                    : 'red',
             }}
           />
           <FormField
@@ -386,9 +381,9 @@ function PlanDePago() {
                 fileTotalCredit - externalTotalCredit === 0
                   ? 'green'
                   : fileTotalCredit - externalTotalCredit <= 100 &&
-                    fileTotalCredit - externalTotalCredit >= -100
-                  ? 'orange'
-                  : 'red',
+                      fileTotalCredit - externalTotalCredit >= -100
+                    ? 'orange'
+                    : 'red',
             }}
           />
 
@@ -433,7 +428,6 @@ function PlanDePago() {
                 id="usd"
                 checked={currency === 'usd'}
                 onChange={() => setCurrency('usd')}
-                disabled
               />
               <Label htmlFor="usd">USD</Label>
             </div>
@@ -455,7 +449,8 @@ function PlanDePago() {
                   file[0],
                   targetSheet,
                   paymentNumberColumn,
-                  cellOperationNumber
+                  cellOperationNumber,
+                  currency
                 )
                 setQuery2(updateQueries)
               }

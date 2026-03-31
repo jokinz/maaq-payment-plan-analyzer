@@ -863,8 +863,10 @@ export const createUpdateQueries = async (
   file: File,
   sheetName: string,
   columnName: string,
-  cellOperationNumber: string
+  cellOperationNumber: string,
+  currency: string
 ): Promise<any> => {
+  const currencyUSD = currency.toUpperCase() === 'USD'
   try {
     const sheet = await getSheet(file, sheetName)
     if (!sheet) {
