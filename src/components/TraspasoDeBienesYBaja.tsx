@@ -46,8 +46,8 @@ function TraspasoDeBienesYBaja() {
   const [sourceOperation, setSourceOperation] = useState<number>(0)
   const [targetOperation, setTargetOperation] = useState<number>(0)
   const [selectedStatus, setSelectedStatus] = useState<string>('')
-  const [exception, setException] = useState<string>('')
-  const [exceptionsList, setExceptionsList] = useState<string[]>([])
+  const [good, setGood] = useState<string>('')
+  const [goodsList, setGoodsList] = useState<string[]>([])
 
   const restartValues = () => {
     setSourceOperation(0)
@@ -101,41 +101,48 @@ DELETE FROM SCA_ADMINI..GAR WHERE FLD_GAR_OPER = ${targetOperation}`
         ></Query>
         <div className="grid grid-cols-2 gap-4 items-center text-left">
           <FormField
-            htmlFor="exception"
-            label="Excepción"
-            value={exception}
+            htmlFor="Bien"
+            label="Bien"
+            value={good}
             onChange={(event) => {
-              setException(event.target.value)
+              setGood(event.target.value)
             }}
           />
         </div>
         <Button
-          disabled={exception === ''}
+          disabled={good === ''}
           onClick={(event) => {
             event.preventDefault()
-            setExceptionsList((prevState) => [...prevState, exception])
-            setException('')
+            setGoodsList((prevState) => [...prevState, good])
+            setGood('')
           }}
         >
           Agregar
         </Button>
-        {exceptionsList.length > 0 && (
-          <div className="flex gap-2 items-center">
-            <p>Excepciones: </p>
-            {exceptionsList.map((item, index) => (
-              <Button
-                key={index}
-                variant={'destructive'}
-                onClick={(event) => {
-                  event.preventDefault()
-                  setExceptionsList((prevState) =>
-                    prevState.filter((item2) => item2 !== item)
-                  )
-                }}
+        {goodsList.length > 0 && (
+          <div className="grid grid-cols-12 gap-2 items-center col-span-2">
+            <div className="col-span-2 text-left">
+              <Select
+                value={includeStatus}
+                onValueChange={(value: 'include' | 'exclude') =>
+                  setIncludeStatus(value)
+                }
+                name="selectedStatus"
               >
-                {item} X
-              </Button>
-            ))}
+              {goodsList.map((item, index) => (
+                <Button
+                  key={index}
+                  variant={'destructive'}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    setGoodsList((prevState) =>
+                      prevState.filter((item2) => item2 !== item)
+                    )
+                  }}
+                >
+                  {item} X
+                </Button>
+              ))}
           </div>
         )}
 
