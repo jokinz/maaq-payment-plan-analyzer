@@ -3,7 +3,7 @@ import { queryData } from './components/PlanDePagoAdv'
 
 export const getDataQuery = (operationNumber: number): string => {
   return `
-  SELECT SUM(FLD_COL_AMOR), NUM_CUOTAS = COUNT(1) FROM
+  SELECT NUM_CUOTAS = COUNT(1), SUM(FLD_COL_AMOR) FROM
   SCA_HIPOTEC..COL 
   WHERE FLD_COL_OPER = ${operationNumber} 
 
@@ -20,7 +20,6 @@ export const updateQuery = (operationNumber: number): string => {
     ,		@num_liq		int
   
           SET @FLD_COL_OPER = ${operationNumber}
-  
   
           SELECT @FLD_FIN_FPDE = FLD_FIN_FPDE FROM SCA_HIPOTEC..FIN WHERE FLD_FIN_OPER = @FLD_COL_OPER 
           
@@ -42,8 +41,6 @@ export const updateQuery = (operationNumber: number): string => {
         FLD_TRC_FPRO = 0 AND
         FLD_TRC_ASN IN ('SCA1','SCA26' /*OTORGAMIENTOS*/,'SCA5'/*REVERSA OTORGAMIENTO*/,'SCA33'/*OTORGAMIENTO DE RECUPERO*/)
   
-  
-  
     /*RESPALDA DATOS DE TABLA FIN Y COL EN BASE DE DATOS HISTORICO*/
     INSERT INTO SCA_HISTORICO..THIS_FIN
     (THIS_FIN_OPER, THIS_FIN_MOS, THIS_FIN_FOTO, THIS_FIN_FPDE, THIS_FIN_PLA, THIS_FIN_GNOT, THIS_FIN_MOT, THIS_FIN_INST, THIS_FIN_ICAP, THIS_FIN_MIMP, THIS_FIN_NLIQ)
@@ -56,8 +53,6 @@ export const updateQuery = (operationNumber: number): string => {
     SELECT FLD_COL_OPER, FLD_COL_FVEN, FLD_COL_AMOR, FLD_COL_NCU, FLD_COL_INT, FLD_COL_CUO , FLD_COL_ECLP, FLD_COL_NDOC, FLD_COL_SEGU, @num_liq
     FROM SCA_HIPOTEC..COL
     WHERE FLD_COL_OPER=@FLD_COL_OPER
-  
-  
   
     --- PARA LOS CASOS DE CUOTAS QUE ENTRAN VENCIDAS
     UPDATE SCA_ADMINI..TCO
