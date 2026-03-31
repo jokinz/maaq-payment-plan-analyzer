@@ -136,6 +136,34 @@ export const goodsBackupQuery = (date: Date): string => {
   return query
 }
 
+export const transferGoodsQuery = (
+  sourceOperation: number,
+  targetOperation: number,
+  goodsList: string[],
+  includeStatus: 'include' | 'exclude'
+): string => {
+  if (targetOperation === sourceOperation) {
+    return ''
+  }
+  let query = `INSERT INTO SCA_ADMINI..GAR
+       SELECT ${targetOperation} , FLD_GAR_NCHASIS,FLD_GAR_NMOT,FLD_GAR_MODB,FLD_GAR_TIPB,FLD_GAR_ESTB,FLD_GAR_PRD,FLD_GAR_SUC,FLD_GAR_MON
+,FLD_GAR_ACO,FLD_GAR_CAL,FLD_GAR_CIU,FLD_GAR_COM,FLD_GAR_REG,FLD_GAR_FTAS,FLD_GAR_HIP,FLD_GAR_IBRA,FLD_GAR_IBRF,FLD_GAR_IBRN
+,FLD_GAR_NBO,FLD_GAR_NOT,FLD_GAR_NUE,FLD_GAR_ROLC1,FLD_GAR_ROLC2,FLD_GAR_SUCC,FLD_GAR_SUT,FLD_GAR_TGAR,FLD_GAR_TIB,FLD_GAR_VAT
+,FLD_GAR_VCO,FLD_GAR_VSIM,FLD_GAR_TIPO,FLD_GAR_MVEH,FLD_GAR_MODV, FLD_GAR_FEJE,FLD_GAR_TBI,FLD_GAR_TIC,FLD_GAR_DES
+,FLD_GAR_IBRC,FLD_GAR_TBIEN,FLD_GAR_MODELO,FLD_GAR_FIBR,FLD_GAR_BLOC,FLD_GAR_DEPTO,FLD_GAR_CBR,FLD_GAR_IBRA2,FLD_GAR_DIRN
+,FLD_GAR_CPOS,FLD_GAR_VMKD,FLD_GAR_POLI,FLD_GAR_MONB,FLD_GAR_FDEP,FLD_GAR_TCOMB,FLD_GAR_EASEG,FLD_GAR_NUMFAC,FLD_GAR_FEMFAC,FLD_GAR_MTOFAC
+       ,FLD_GAR_OTGR,FLD_GAR_BENL,FLD_GAR_ITEM 
+       FROM SCA_ADMINI..GAR INNER JOIN SCA_ADMINI..TCO ON FLD_GAR_OPER = FLD_TCO_OPER
+       WHERE FLD_GAR_OPER IN(${sourceOperation})`
+  if (goodsList.length > 0) {
+    query += ` AND LTRIM(RTRIM(FLD_GAR_BLOC)) ${includeStatus === 'exclude' ? 'NOT ' : ''} IN (${goodsList.map(
+      (item) => `'${item}'`
+    )}) ORDER BY  FLD_GAR_BLOC`
+  }
+
+  return query
+}
+
 export const checkDicomQuery = (
   contractList: number[],
   paymentList: number[],
