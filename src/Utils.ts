@@ -917,19 +917,19 @@ export const createUpdateQueries = async (
         }
 
         function createUpdateQueryLine(rowData: any) {
-          const fld_col_amor = Math.round(rowData.amortizacion)
-          const fld_col_int = Math.round(rowData.intereses)
+          const fld_col_amor = currencyUSD ? rowData.amortizacion.toFixed(4) : Math.round(rowData.amortizacion)
+          const fld_col_int = currencyUSD ? rowData.intereses.toFixed(4) : Math.round(rowData.intereses)
           const fld_col_fven = excelDateToFormattedDate(rowData.fechVenc)
-          const fld_col_segu = Math.round(rowData.seguros)
-          const fld_col_cuo = Math.round(rowData.cuota)
-          const fld_col_cuos = Math.round(rowData.cuota - rowData.seguros)
+          const fld_col_segu = currencyUSD ? rowData.seguros.toFixed(4) : Math.round(rowData.seguros)
+          const fld_col_cuo = currencyUSD ? rowData.cuota.toFixed(4) : Math.round(rowData.cuota)
+          const fld_col_cuos = currencyUSD ? (rowData.cuota - rowData.seguros).toFixed(4) : Math.round(rowData.cuota - rowData.seguros)
 
           let fld_col_salc =
             rowData.cuota > 0
               ? Math.round(rowData.cuota)
               : rowData.saldoInsoluto
 
-          const fld_col_sal = Math.round(rowData.saldoInsoluto)
+          const fld_col_sal = currencyUSD ? rowData.saldoInsoluto.toFixed(4) : Math.round(rowData.saldoInsoluto)
 
           const query = `Update col set fld_col_amor = ${fld_col_amor}, fld_col_int = ${fld_col_int}, fld_col_fven = '${fld_col_fven}', fld_col_segu = ${fld_col_segu}, fld_col_cuo = ${fld_col_cuo}, fld_col_cuos = ${fld_col_cuos}, fld_col_salc = case when fld_col_salc > 0 then ${fld_col_salc} else fld_col_salc end , fld_col_sal = ${fld_col_sal} where fld_col_oper = ${rowData.operationNumber} and fld_col_ncu = ${rowData.numCuota}`
 
