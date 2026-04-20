@@ -830,10 +830,14 @@ export const validateWebpcfData = async (
             sheet[XLSX.utils.encode_cell({ r: rowIndex + 1, c: colIndex + 6 })]
               ?.v
 
+          const MIN_TOLERANCE = 0.001
+
           if (
-            seguros + intereses + amortizacion - cuota !== 0 ||
-            saldoInsoluto - siguienteAmortizacion - siguienteSaldoInsoluto !==
-              0 ||
+            Math.abs(seguros + intereses + amortizacion - cuota) >=
+              MIN_TOLERANCE ||
+            Math.abs(
+              saldoInsoluto - siguienteAmortizacion - siguienteSaldoInsoluto
+            ) >= MIN_TOLERANCE ||
             siguienteNumCuota - numCuota !== 1 ||
             siguienteFechVenc - fechVenc < 28 ||
             siguienteFechVenc - fechVenc > 31
