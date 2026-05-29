@@ -904,8 +904,11 @@ export const createUpdateQueries = async (
           : 0
         const intereses =
           sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 4 })]?.v
-        const seguros =
-          sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 5 })]?.v
+        const seguros = sheet[
+          XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 5 })
+        ]?.v
+          ? sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 5 })]?.v
+          : 0
         const saldoInsoluto =
           sheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex + 6 })]?.v
 
